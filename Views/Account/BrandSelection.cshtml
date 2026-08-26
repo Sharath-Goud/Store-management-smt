@@ -1,0 +1,627 @@
+﻿@model List<Store_Management.Models.Brand>
+
+@{
+    ViewData["Title"] = "Select Brand";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>Select Brand - Store Management</title>
+
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient( 180deg, #111827, #020617 );
+        }
+
+
+        .brand-page {
+            width: 100%;
+            max-width: 850px;
+            padding: 20px;
+        }
+
+
+        .brand-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 70px 45px 45px;
+            box-shadow: 0 25px 60px rgba(0,0,0,.25);
+            border: 1px solid #e5e7eb;
+            position: relative;
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+
+        .brand-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #2563eb;
+            color: white;
+            font-size: 32px;
+            box-shadow: 0 10px 25px rgba(37,99,235,.30);
+        }
+
+
+        .brand-header h1 {
+            color: #111827;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+
+        .brand-header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
+        }
+
+        .brand-option {
+            text-decoration: none;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: .25s ease;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(15,23,42,.05);
+        }
+
+
+            .brand-option:hover {
+                transform: translateY(-5px);
+                border-color: #2563eb;
+                background: #f8fbff;
+                box-shadow: 0 15px 30px rgba(37,99,235,.15);
+            }
+
+        .brand-logo {
+            width: 85px;
+            height: 85px;
+            margin: 0 auto 18px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            color: #0f172a;
+            font-size: 25px;
+            font-weight: 800;
+            border: 1px solid #e2e8f0;
+        }
+
+
+        .brand-option h2 {
+            margin-top: 20px;
+            color: #111827;
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+
+        .brand-option p {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 30px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        @@media (max-width: 700px) {
+
+            .brand-card {
+                padding: 30px 20px;
+            }
+
+
+            .brand-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .brand-option {
+                padding: 25px;
+            }
+        }
+
+        .brand-card {
+            position: relative;
+        }
+
+
+        .top-actions {
+            position: absolute;
+            top: 18px;
+            right: 25px;
+            display: flex;
+            gap: 12px;
+        }
+
+
+        .action-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+            transition: .25s ease;
+            cursor: pointer;
+        }
+
+        .add-btn {
+            background: #dcfce7;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
+
+            .add-btn:hover {
+                background: #16a34a;
+                color: white;
+                transform: translateY(-3px);
+            }
+
+        .edit-btn {
+            background: #fef3c7;
+            color: #d97706;
+            border: 1px solid #fde68a;
+        }
+
+
+            .edit-btn:hover {
+                background: #d97706;
+                color: white;
+                transform: translateY(-3px);
+            }
+
+        .delete-btn {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+            .delete-btn:hover {
+                background: #dc2626;
+                color: white;
+                transform: translateY(-3px);
+            }
+
+        .edit-icon {
+            display: inline-block;
+            transform: rotate(125deg);
+        }
+
+        .brand-option {
+            position: relative;
+        }
+
+
+        .brand-link {
+            text-decoration: none;
+        }
+
+        .brand-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+
+            .brand-actions button {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid transparent;
+                cursor: pointer;
+                font-size: 15px;
+                transition: .25s ease;
+            }
+
+
+                .brand-actions button:first-child {
+                    background: #fef3c7;
+                    color: #d97706;
+                    border-color: #fde68a;
+                }
+
+
+                    .brand-actions button:first-child:hover {
+                        background: #d97706;
+                        color: white;
+                        transform: translateY(-3px);
+                    }
+
+
+                .brand-actions button:last-child {
+                    background: #fee2e2;
+                    color: #dc2626;
+                    border-color: #fecaca;
+                }
+
+                    .brand-actions button:last-child:hover {
+                        background: #dc2626;
+                        color: white;
+                        transform: translateY(-3px);
+                    }
+
+        .popup {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-box {
+            background: white;
+            padding: 35px;
+            border-radius: 18px;
+            width: 380px;
+        }
+
+            .popup-box h2 {
+                margin-bottom: 25px;
+                color: #111827;
+                font-size: 24px;
+            }
+
+            .popup-box input {
+                width: 100%;
+                height: 45px;
+                padding: 0 14px;
+                margin-bottom: 25px;
+                border-radius: 10px;
+                border: 1px solid #cbd5e1;
+                font-size: 14px;
+                outline: none;
+            }
+
+            .popup-box form {
+                display: flex;
+                flex-direction: column;
+            }
+
+                .popup-box input:focus {
+                    border-color: #2563eb;
+                    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+                }
+
+            .popup-box button {
+                height: 38px;
+                padding: 0 22px;
+                border-radius: 10px;
+                border: 1px solid transparent;
+                font-size: 14px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: .25s ease;
+            }
+
+                .popup-box button[type="submit"] {
+                    background: #dcfce7;
+                    color: #16a34a;
+                    border-color: #bbf7d0;
+                }
+
+                    .popup-box button[type="submit"]:hover {
+                        background: #16a34a;
+                        color: white;
+                        transform: translateY(-2px);
+                    }
+
+                .popup-box button[type="button"] {
+                    background: #fee2e2;
+                    color: #dc2626;
+                    border-color: #fecaca;
+                }
+
+                    .popup-box button[type="button"]:hover {
+                        background: #dc2626;
+                        color: white;
+                        transform: translateY(-2px);
+                    }
+
+        .card-edit-icon {
+            display: inline-block;
+            transform: rotate(125deg);
+        }
+
+        .add-brand{
+            /* display: flex; */
+            flex-direction: column;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="brand-page">
+
+        <div class="brand-card">
+
+            <div class="top-actions">
+
+                <button class="action-btn add-btn"
+                        onclick="openAddPopup()">
+                    +
+                </button>
+
+                @* <a asp-controller="Store"
+                   asp-action="Index"
+                   class="action-btn edit-btn"
+                   title="Edit Item">
+
+                    <span class="edit-icon">
+                        ✏
+                    </span>
+
+                </a>
+
+                <a asp-controller="Store"
+                   asp-action="Index"
+                   class="action-btn delete-btn"
+                   title="Delete Item">
+
+                    🗑
+
+                </a> *@
+
+            </div>
+
+            <div class="brand-header">
+
+                <div class="brand-icon">
+                    📦
+                </div>
+
+
+                <h1>
+                    Select Brand
+                </h1>
+
+
+                <p>
+                    Select the brand you want to manage
+                </p>
+
+            </div>
+
+            <div class="brand-grid">
+
+                @foreach (var brand in Model)
+                {
+
+                    <div class="brand-option">
+
+                        <a asp-controller="Store"
+                           asp-action="AddItem"
+                           asp-route-brandId="@brand.BrandId"
+                           class="brand-link">
+
+                            <h2>
+                                @brand.BrandName
+                            </h2>
+
+                        </a>
+
+                        <div class="brand-actions">
+
+
+                            <button type="button"
+                                    onclick="event.stopPropagation(); openEditPopup(
+                                '@brand.BrandId',
+                                '@brand.BrandName')">
+
+                                <span class="card-edit-icon">
+                                    ✏
+                                </span>
+
+                            </button>
+
+                            <button type="button"
+                                    onclick="event.stopPropagation(); deleteBrand('@brand.BrandId')">
+
+                                🗑
+
+                            </button>
+
+
+                        </div>
+
+
+
+                    </div>
+
+                }
+
+
+            </div>
+
+            <div class="footer-text">
+
+                © @DateTime.Now.Year Store Management System
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="addPopup" class="popup">
+
+
+        <div class="popup-box">
+
+
+            <h2>Add Brand</h2>
+
+
+            <form asp-action="AddBrand"
+                  method="post">
+
+
+                <input type="text"
+                       name="brandName"
+                       placeholder="Enter brand name"
+                       required />
+
+
+               <div class="add-brand">
+                    <button type="submit">
+                        Save
+                    </button>
+
+
+                    <button type="button"
+                            onclick="closeAddPopup()">
+                        Cancel
+                    </button>
+               </div>
+
+
+            </form>
+
+
+        </div>
+
+
+    </div>
+
+    <div id="editPopup" class="popup">
+
+
+        <div class="popup-box">
+
+
+            <h2>Edit Brand</h2>
+
+
+
+            <form asp-action="UpdateBrand"
+                  method="post">
+
+
+                <input type="hidden"
+                       id="editId"
+                       name="id" />
+
+
+                <input type="text"
+                       id="editName"
+                       name="brandName"
+                       required />
+
+
+                <div class="popup-buttons">
+
+                    <button type="submit">
+                        Update
+                    </button>
+
+
+                    <button type="button"
+                            onclick="closeEditPopup()">
+                        Cancel
+                    </button>
+
+                </div>
+
+
+            </form>
+
+
+        </div>
+
+    </div>
+
+    <script>
+
+        function openAddPopup()
+        {
+            document.getElementById("addPopup").style.display = "flex";
+        }
+
+        function closeAddPopup()
+        {
+            document.getElementById("addPopup").style.display = "none";
+        }
+
+        function openEditPopup(id, name)
+        {
+            document.getElementById("editId").value = id;
+            document.getElementById("editName").value = name;
+
+            document.getElementById("editPopup").style.display = "flex";
+        }
+
+        function closeEditPopup()
+        {
+            document.getElementById("editPopup").style.display = "none";
+        }
+
+        function deleteBrand(id)
+        {
+            if (confirm("Are you sure you want to delete this brand?"))
+            {
+                window.location.href = "/Account/DeleteBrand?id=" + id;
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>

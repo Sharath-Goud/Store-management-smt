@@ -1,0 +1,22 @@
+# Visual Studio
+.vs/
+
+# Build folders
+bin/
+obj/
+
+# Visual Studio user files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# Temporary files
+*.tmp
+*.temp
+
+# ASP.NET generated files
+wwwroot/lib/

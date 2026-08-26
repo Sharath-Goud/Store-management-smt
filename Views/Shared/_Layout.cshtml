@@ -1,0 +1,275 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - Store Inventory</title>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f9;
+            min-height: 100vh;
+        }
+
+            body.logged-in {
+                display: flex;
+            }
+
+        .sidebar {
+            width: 270px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: linear-gradient( 180deg, #111827, #020617 );
+            color: white;
+            display: none;
+            flex-direction: column;
+            box-shadow: 5px 0 25px rgba(0,0,0,.25);
+            z-index: 1000;
+        }
+
+        body.logged-in .sidebar {
+            display: flex;
+        }
+
+        .sidebar-brand {
+            height: 85px;
+            display: flex;
+            align-items: center;
+            padding-left: 30px;
+            font-size: 23px;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,.12);
+        }
+
+            .sidebar-brand span {
+                color: #38bdf8;
+                letter-spacing: .5px;
+            }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 25px 15px;
+            flex: 1;
+        }
+
+            .sidebar-menu li {
+                margin-bottom: 10px;
+            }
+
+                .sidebar-menu li a {
+                    display: flex;
+                    align-items: center;
+                    padding: 15px 20px;
+                    color: #cbd5e1;
+                    text-decoration: none;
+                    border-radius: 12px;
+                    font-size: 15px;
+                    font-weight: 500;
+                    transition: .3s;
+                }
+
+                    .sidebar-menu li a:hover {
+                        background: #1e293b;
+                        color: white;
+                        transform: translateX(5px);
+                    }
+
+                    .sidebar-menu li a.active {
+                        background: linear-gradient( 135deg, #38bdf8, #0ea5e9 );
+                        color: #082f49;
+                        font-weight: 700;
+                        box-shadow: 0 8px 20px rgba(56,189,248,.3);
+                    }
+
+        .sidebar-footer {
+            padding: 25px;
+            border-top: 1px solid rgba(255,255,255,.12);
+        }
+
+
+            .sidebar-footer a {
+                width: 100px;
+                height: 40px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: linear-gradient( 135deg, #ef4444, #991b1b );
+                color: white;
+                text-decoration: none;
+                border-radius: 14px;
+                font-size: 14px;
+                font-weight: 700;
+                letter-spacing: .5px;
+                box-shadow: 0 10px 20px rgba(239,68,68,.3);
+                transition: .3s;
+            }
+
+                .sidebar-footer a:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 15px 25px rgba(239,68,68,.5);
+                }
+
+        .top-header {
+            height: 70px;
+            background: linear-gradient( 180deg, #111827, #020617 );
+            color: white;
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 270px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 35px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.08);
+            z-index: 900;
+        }
+
+        .user-info {
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .main-content {
+            flex: 1;
+            min-height: 100vh;
+            padding: 100px 35px 35px 35px;
+        }
+
+        body.logged-in .main-content {
+            margin-left: 270px;
+        }
+
+        .login-page-container {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient( 135deg, #667eea, #764ba2 );
+        }
+
+        @@media(max-width:768px) {
+
+
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar-brand span,
+            .sidebar-menu span,
+            .sidebar-footer span {
+                display: none;
+            }
+
+            .top-header {
+                left: 80px;
+            }
+
+            body.logged-in .main-content {
+                margin-left: 80px;
+                padding: 90px 15px 20px;
+            }
+        }
+    </style>
+
+</head>
+
+<body class="@(Context.Session.GetString("LoggedIn") == "true" ? "logged-in" : "")">
+
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+
+            <span>
+                Store Management
+            </span>
+
+        </div>
+
+        <ul class="sidebar-menu">
+
+
+            <li>
+
+                <a href="@Url.Action("AddItem", "Store")"
+                   class="@(ViewContext.RouteData.Values["action"]?.ToString() == "AddItem" ? "active" : "")">
+
+                    Add Item / Stock In
+
+                </a>
+
+            </li>
+
+            <li>
+
+                <a asp-controller="Store"
+                   asp-action="Index"
+                   asp-route-brandId="@ViewBag.BrandId"
+                   class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+
+                    Inventory
+
+                </a>
+
+            </li>
+
+        </ul>
+
+    </nav>
+
+
+    @if (Context.Session.GetString("LoggedIn") == "true")
+    {
+
+        <header class="top-header">
+
+
+            <div class="sidebar-footer">
+
+                <a asp-controller="Account"
+                   asp-action="Logout">
+
+                    Logout
+
+                </a>
+
+            </div>
+
+        </header>
+
+    }
+
+
+    <div class="main-content">
+        @RenderBody()
+    </div>
+
+
+    <script src="~/js/site.js"
+            asp-append-version="true"></script>
+
+
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+
+
+</body>
+
+
+</html>

@@ -1,0 +1,720 @@
+﻿@model List<Store_Management.Models.Item>
+
+@{
+    ViewData["Title"] = "Add Item / Stock In";
+}
+
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert success">
+        @TempData["Success"]
+    </div>
+}
+
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert error">
+        @TempData["Error"]
+    </div>
+}
+
+
+
+<div class="inventory-page">
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>
+                Add Item / Stock In
+            </h1>
+
+            <p>
+                Register new inventory item into store management system
+            </p>
+
+            @* <div class="selected-project">
+
+                <span class="project-label">
+                    Selected Project:
+                </span>
+
+                <span class="project-name">
+                    @ViewBag.BrandName
+                </span>
+
+            </div> *@
+
+        </div>
+
+    </div>
+
+    <section class="inventory-card">
+
+        <form asp-action="AddItem"
+              method="post"
+              enctype="multipart/form-data">
+
+            <div class="brand-selected-box">
+
+                <div class="input-box">
+
+                    <label>
+                        Brand
+                    </label>
+
+                    <input type="text"
+                           value="@ViewBag.BrandName"
+                           readonly />
+
+                    <input type="hidden"
+                           name="brandId"
+                           value="@ViewBag.BrandId" />
+
+                </div>
+
+            </div>
+
+            <div class="form-grid">
+
+                <div class="details-card">
+
+                    <div class="section-title">
+
+                        <span>📦</span>
+
+                        Item Information
+
+                    </div>
+
+                    <div class="input-box">
+
+                        <label>
+                            Part Number
+                            <span>*</span>
+                        </label>
+
+                        <input id="partNumber"
+                               name="partNumber"
+                               placeholder="Enter part number"
+                               required />
+
+                    </div>
+
+                    <div class="input-box">
+
+
+                        <label>
+                            Item Name
+                            <span>*</span>
+                        </label>
+
+
+                        <input id="itemName"
+                               name="itemName"
+                               placeholder="Enter item name"
+                               required />
+
+                    </div>
+
+                    <div class="input-box">
+
+                        <label>
+                            Quantity
+                            <span>*</span>
+                        </label>
+
+                        <input id="quantity"
+                               name="quantity"
+                               type="number"
+                               placeholder="Enter quantity"
+                               required />
+
+                    </div>
+
+                </div>
+
+                <div class="image-card">
+
+                    <div class="section-title">
+                        Product Image
+                    </div>
+
+                    <div class="upload-box" id="uploadBox">
+
+                        <input id="photoInput"
+                               name="photo"
+                               type="file"
+                               accept="image/*" />
+
+                        <div class="upload-content" id="uploadContent">
+
+                            <div class="camera">
+                                📷
+                            </div>
+
+                            <h3>
+                                Upload Product Image
+                            </h3>
+
+                            <p>
+                                Click to browse or paste image
+                            </p>
+
+                            <small>
+                                You can also press <b>Ctrl + V</b> to paste an image
+                            </small>
+
+                        </div>
+
+                        <div class="preview-container" id="previewContainer">
+
+                            <img id="preview"
+                                 class="preview"
+                                 alt="Product Image Preview" />
+
+                            <button type="button"
+                                    id="removeImage"
+                                    class="remove-image"
+                                    title="Remove image">
+                                ×
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="button-area">
+
+                <button class="save-btn"
+                        type="submit">
+
+                    Add Item / Stock In
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+<style>
+
+    body {
+        background: #f1f5f9;
+    }
+
+    .inventory-page {
+        width: 92%;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 18px;
+    }
+
+        .page-header h1 {
+            font-size: 30px;
+            color: #0f172a;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .page-header p {
+            color: #64748b;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+    .inventory-card {
+        width: 100%;
+        background: white;
+        padding: 24px;
+        border-radius: 18px;
+        box-shadow: 0 15px 35px rgba(15,23,42,.08);
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 24px;
+        align-items: stretch;
+    }
+
+    .details-card,
+    .image-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 17px;
+        font-weight: 400;
+        color: #0f172a;
+        margin-bottom: 20px;
+    }
+
+    .input-box {
+        margin-bottom: 17px;
+    }
+
+        .input-box:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-box label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .input-box span {
+            color: #ef4444;
+        }
+
+        .input-box input {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 9px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            font-size: 14px;
+            transition: .3s;
+        }
+
+            .input-box input:focus {
+                background: white;
+                border-color: #2563eb;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+            }
+
+    .upload-box {
+        height: 270px;
+        border: 2px dashed #94a3b8;
+        border-radius: 16px;
+        background: #f8fafc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+    }
+
+        .upload-box:hover {
+            background: #eff6ff;
+            border-color: #2563eb;
+        }
+
+        .upload-box input[type=file] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+    .upload-content {
+        text-align: center;
+        pointer-events: none;
+        padding: 10px;
+    }
+
+    .camera {
+        font-size: 45px;
+        line-height: 1;
+    }
+
+    .upload-content h3 {
+        margin-top: 12px;
+        color: #1e293b;
+        font-size: 16px;
+    }
+
+    .upload-content p {
+        color: #64748b;
+        margin-top: 6px;
+        font-size: 13px;
+    }
+
+    .upload-content small {
+        display: block;
+        margin-top: 9px;
+        color: #64748b;
+        font-size: 11px;
+    }
+
+    .preview-container {
+        display: none;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        justify-content: center;
+        align-items: center;
+        background: #f8fafc;
+        z-index: 10;
+        pointer-events: auto;
+    }
+
+        .preview-container.show {
+            display: flex;
+        }
+
+    .preview {
+        max-width: 85%;
+        max-height: 85%;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(15,23,42,.15);
+        position: relative;
+        z-index: 11;
+    }
+
+    .remove-image {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: 50%;
+        background: #ef4444;
+        color: white;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 20;
+        pointer-events: auto;
+        box-shadow: 0 5px 12px rgba(239,68,68,.30);
+        transition: .2s;
+    }
+
+        .remove-image:hover {
+            background: #dc2626;
+            transform: scale(1.08);
+        }
+
+    .button-area {
+        margin-top: 20px;
+    }
+
+    .save-btn {
+        width: 210px;
+        height: 44px;
+        padding: 0 20px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(37,99,235,.28);
+        transition: .3s;
+    }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(37,99,235,.32);
+        }
+
+    .alert {
+        width: 92%;
+        max-width: 1100px;
+        margin: 0 auto 15px;
+        padding: 10px 14px;
+        border-radius: 8px;
+    }
+
+    @@media (max-width: 900px) {
+
+        .inventory-page {
+            width: 94%;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .upload-box {
+            height: 260px;
+        }
+    }
+
+
+    @@media (max-width: 600px) {
+
+        .inventory-page {
+            width: 95%;
+        }
+
+        .inventory-card {
+            padding: 16px;
+            border-radius: 14px;
+        }
+
+        .details-card,
+        .image-card {
+            padding: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 25px;
+        }
+
+        .save-btn {
+            width: 100%;
+        }
+    }
+
+    .brand-selected-box {
+        margin-bottom: 24px;
+        padding: 18px 20px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+    }
+
+        .brand-selected-box .input-box {
+            margin-bottom: 0;
+        }
+
+        .brand-selected-box input[readonly] {
+            background: #e2e8f0;
+            color: #334155;
+            font-weight: 600;
+            cursor: not-allowed;
+        }
+
+    .selected-project {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+    }
+
+    .project-label {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .project-name {
+        color: #1d4ed8;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+</style>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const photoInput = document.getElementById("photoInput");
+        const uploadBox = document.getElementById("uploadBox");
+        const uploadContent = document.getElementById("uploadContent");
+        const previewContainer = document.getElementById("previewContainer");
+        const preview = document.getElementById("preview");
+        const removeImage = document.getElementById("removeImage");
+
+    function showImage(file) {
+
+        if (!file) {
+            return;
+        }
+
+        // Make sure selected file is an image
+        if (!file.type.startsWith("image/")) {
+
+            alert("Please select a valid image file.");
+
+            clearImage();
+
+            return;
+        }
+
+        // Create an immediate preview URL
+        const imageUrl = URL.createObjectURL(file);
+
+        preview.onload = function () {
+
+            // Release the temporary object URL
+            URL.revokeObjectURL(imageUrl);
+
+        };
+
+        preview.src = imageUrl;
+
+        uploadContent.style.display = "none";
+
+        previewContainer.classList.add("show");
+    }
+
+        photoInput.addEventListener("change", function () {
+
+            if (this.files && this.files.length > 0) {
+
+                showImage(this.files[0]);
+
+            }
+
+        });
+
+        function clearImage() {
+
+            photoInput.value = "";
+
+            preview.src = "";
+
+            previewContainer.classList.remove("show");
+
+            uploadContent.style.display = "block";
+        }
+
+
+        removeImage.addEventListener("click", function (event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            clearImage();
+
+        });
+
+        document.addEventListener("paste", function (event) {
+
+            const clipboardData = event.clipboardData;
+
+            if (!clipboardData) {
+                return;
+            }
+
+
+            const items = clipboardData.items;
+
+            if (!items) {
+                return;
+            }
+
+
+            for (let i = 0; i < items.length; i++) {
+
+                const item = items[i];
+
+                if (item.type.indexOf("image") !== -1) {
+
+                    event.preventDefault();
+
+                    const file = item.getAsFile();
+
+                    if (!file) {
+                        return;
+                    }
+
+                    const dataTransfer = new DataTransfer();
+
+                    dataTransfer.items.add(file);
+
+                    photoInput.files = dataTransfer.files;
+
+                    showImage(file);
+
+
+                    break;
+                }
+
+            }
+
+        });
+
+        uploadBox.addEventListener("dragover", function (event) {
+
+            event.preventDefault();
+
+            uploadBox.style.borderColor = "#2563eb";
+            uploadBox.style.background = "#eff6ff";
+
+        });
+
+
+        uploadBox.addEventListener("dragleave", function () {
+
+            uploadBox.style.borderColor = "#94a3b8";
+            uploadBox.style.background = "#f8fafc";
+
+        });
+
+
+        uploadBox.addEventListener("drop", function (event) {
+
+            event.preventDefault();
+
+
+            uploadBox.style.borderColor = "#94a3b8";
+            uploadBox.style.background = "#f8fafc";
+
+
+            const files = event.dataTransfer.files;
+
+
+            if (!files || files.length === 0) {
+                return;
+            }
+
+
+            const file = files[0];
+
+
+            if (!file.type.startsWith("image/")) {
+
+                alert("Please drop an image file.");
+
+                return;
+            }
+
+            const dataTransfer = new DataTransfer();
+
+            dataTransfer.items.add(file);
+
+            photoInput.files = dataTransfer.files;
+
+
+            showImage(file);
+
+        });
+
+    });
+
+</script>

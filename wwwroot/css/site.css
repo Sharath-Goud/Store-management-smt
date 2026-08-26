@@ -1,0 +1,154 @@
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f1f3f6;
+    color: #111;
+}
+.topbar {
+    height: 76px;
+    background: #124da3;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+}
+.brand { font-size: 22px; font-weight: 700; }
+.logout {
+    background: #2e63b4;
+    color: white;
+    padding: 11px 17px;
+    border-radius: 7px;
+    text-decoration: none;
+}
+.page { max-width: 1090px; margin: 18px auto 45px; padding: 0 10px; }
+.card {
+    background: #fff;
+    border: 1px solid #d7dce2;
+    border-radius: 14px;
+    padding: 17px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+h2 {
+    color: #0d4b9e;
+    font-size: 20px;
+    margin: 2px 0 12px;
+}
+input, select {
+    width: 100%;
+    height: 49px;
+    border: 1px solid #d4dbe3;
+    border-radius: 8px;
+    padding: 0 13px;
+    font-size: 18px;
+    margin-bottom: 10px;
+    background: white;
+}
+.search-row { display: flex; gap: 10px; }
+.search-row input { margin: 0; flex: 1; }
+button, .blue-btn, .green-btn, .purple-btn {
+    border: 0;
+    border-radius: 7px;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    text-decoration: none;
+}
+.blue-btn { background: #1767c5; padding: 13px 18px; }
+.green-btn { background: #2b8532; padding: 13px; }
+.purple-btn { background: #731aa6; padding: 13px; display: block; }
+.full { width: 100%; }
+.center { text-align: center; }
+.photo-label, .reports label { display: block; margin: 2px 0 7px; color: #555; }
+.drop-zone {
+    min-height: 190px;
+    border: 2px dashed #d7dde4;
+    border-radius: 9px;
+    text-align: center;
+    padding: 24px 20px;
+    color: #7189a4;
+    margin-bottom: 12px;
+}
+#pasteBox {
+    margin: 15px 0;
+    padding: 16px;
+    border: 1px solid #d7dde4;
+    border-radius: 8px;
+}
+.preview {
+    max-height: 90px;
+    max-width: 160px;
+    display: none;
+    margin: 10px auto;
+}
+.hint, .muted { color: #71809a; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+    background: #1767c5;
+    color: white;
+    padding: 12px 10px;
+    text-align: left;
+}
+td { padding: 11px 10px; border-bottom: 1px solid #d8dee6; }
+.camera, .item-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 7px;
+    object-fit: cover;
+}
+.camera {
+    background: #edf0f3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.update-form { display: flex; align-items: center; gap: 8px; }
+.qty-input { width: 250px; margin: 0; }
+.in-btn, .out-btn, .delete-btn { padding: 8px 11px; font-size: 16px; }
+.in-btn { background: #2b8532; }
+.out-btn { background: #d52b31; }
+.delete-btn { background: #666; }
+.hidden { display: none; }
+.history-row {
+    padding: 10px 0;
+    border-bottom: 1px solid #d8dee6;
+}
+.positive { color: #138529; font-weight: 600; }
+.negative { color: #d21f26; font-weight: 600; }
+hr { border: 0; border-top: 1px solid #ddd; margin: 16px 0; }
+.report-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.report-row button { grid-column: 1 / -1; }
+.alert { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; }
+.success { background: #e8f6e9; color: #24732a; }
+.error { background: #fdebec; color: #a32127; }
+.empty { text-align: center; color: #888; padding: 20px; }
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.login-card {
+    width: 420px;
+    background: white;
+    border: 1px solid #d7dce2;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 5px 25px rgba(0,0,0,.08);
+}
+.login-card h1 { color: #124da3; margin-top: 0; }
+.login-card label { display: block; margin: 8px 0 5px; }
+.demo-login { text-align: center; margin-top: 18px; color: #71809a; font-size: 14px; }
+
+@media (max-width: 700px) {
+    .search-row, .update-form, .report-row { display: block; }
+    .search-row button, .update-form button { margin-top: 5px; }
+    .qty-input { width: 100%; }
+    .page { padding: 0 6px; }
+}
