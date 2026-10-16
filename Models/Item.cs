@@ -16,6 +16,22 @@ namespace Store_Management.Models
         [StringLength(200)]
         public string ItemName { get; set; } = string.Empty;
 
+        [StringLength(100)]
+        public string? ModelNumber { get; set; }
+
+        [StringLength(100)]
+        public string? ProjectCode { get; set; }
+
+        [StringLength(50)]
+        public string? Status { get; set; }
+
+        public int StockOut { get; set; } = 0;
+
+        public int NgStatus { get; set; } = 0;
+
+        [StringLength(500)]
+        public string? Remarks { get; set; }
+
         [Required]
         public int BrandId { get; set; }
 
@@ -36,6 +52,12 @@ namespace Store_Management.Models
         public DateTime UpdatedAt { get; set; }
 
         public virtual ICollection<Transaction>? Transactions { get; set; }
+
+        public int? LifeTime { get; set; }
+
+        public int? LeadTime { get; set; }
+        public decimal? LifeTimeDays { get; set; }
+        public decimal? LeadTimeDays { get; set; }
 
         public Item()
         {

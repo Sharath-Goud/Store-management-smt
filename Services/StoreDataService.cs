@@ -13,12 +13,59 @@ namespace Store_Management.Services
             _context = context;
         }
 
-        public async Task<User> AuthenticateUser(string username, string password)
+        public async Task<User?> AuthenticateUser(string employeeId, string password)
         {
             return await _context.Users
                 .FirstOrDefaultAsync(u =>
-                    u.Username == username &&
+                    u.EmployeeId == employeeId &&
                     u.Password == password);
+        }
+
+        public async Task<bool> EmployeeIdExists(string employeeId)
+        {
+            return await _context.Users
+                .AnyAsync(u => u.EmployeeId == employeeId);
+        }
+
+        public async Task<User> RegisterUser(
+            string employeeId,
+            string name,
+            string password,
+            string role)
+        {
+            var user = new User
+            {
+                EmployeeId = employeeId.Trim(),
+                Username = name.Trim(),
+                Password = password,
+                Role = role
+            };
+
+            _context.Users.Add(user);
+
+            await _context.SaveChangesAsync();
+
+            return user;
+        }
+
+        public async Task<bool> ResetPassword(
+    string employeeId,
+    string newPassword)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u =>
+                    u.EmployeeId == employeeId);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.Password = newPassword;
+
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
         public async Task<List<Item>> GetAllItems()
@@ -48,16 +95,32 @@ namespace Store_Management.Services
                 .ToListAsync();
         }
 
+
         public async Task<Item> AddItem(Item item)
         {
             item.CreatedAt = DateTime.Now;
             item.UpdatedAt = DateTime.Now;
 
+            // Validate and calculate the derived values.
+            if (item.LifeTime.HasValue)
+            {
+                item.LifeTimeDays =
+                    (item.LifeTime.Value * 3000m) / 2400m;
+            }
+
+            if (item.LeadTime.HasValue)
+            {
+                item.LeadTimeDays =
+                    (item.LeadTime.Value * 2400m) / 2400m;
+            }
+
+            // Add the item, including both calculated fields.
             _context.Items.Add(item);
 
+            // Save the item to the database.
             await _context.SaveChangesAsync();
 
-
+            // Record the initial stock transaction.
             if (item.Quantity > 0)
             {
                 var transaction = new Transaction
@@ -77,26 +140,25 @@ namespace Store_Management.Services
             return item;
         }
 
+
         public async Task<Item> UpdateItem(Item item)
         {
-            var existingItem =
-                await _context.Items.FindAsync(item.Id);
+            var existingItem = await _context.Items.FindAsync(item.Id);
 
             if (existingItem == null)
             {
                 throw new Exception("Item not found");
             }
 
-
             existingItem.PartNumber = item.PartNumber;
-
             existingItem.ItemName = item.ItemName;
-
             existingItem.BrandId = item.BrandId;
-
             existingItem.BrandName = item.BrandName;
-
             existingItem.ImagePath = item.ImagePath;
+            existingItem.ModelNumber = item.ModelNumber;
+            existingItem.ProjectCode = item.ProjectCode;
+            existingItem.Status = item.Status;
+            existingItem.Remarks = item.Remarks;
 
             existingItem.UpdatedAt = DateTime.Now;
 
@@ -105,52 +167,78 @@ namespace Store_Management.Services
             return existingItem;
         }
 
+
+
         public async Task<Item> UpdateItemQuantity(
             int itemId,
             int change,
             string type)
         {
-            var item =
-                await _context.Items.FindAsync(itemId);
+            if (change <= 0)
+            {
+                throw new Exception("Quantity must be greater than zero.");
+            }
+
+            var item = await _context.Items.FindAsync(itemId);
 
             if (item == null)
             {
-                throw new Exception("Item not found");
+                throw new Exception("Item not found.");
             }
 
-
-            if (type == "In")
+            if (string.Equals(type, "In", StringComparison.OrdinalIgnoreCase))
             {
                 item.Quantity += change;
             }
-            else if (type == "Out")
+            else if (string.Equals(type, "Out", StringComparison.OrdinalIgnoreCase))
             {
                 if (item.Quantity < change)
                 {
-                    throw new Exception("Insufficient stock");
+                    throw new Exception(
+                        $"Insufficient stock. Available quantity: {item.Quantity}");
                 }
 
+                // Reduce available quantity.
                 item.Quantity -= change;
+
+                // Increase cumulative StockOut quantity.
+                item.StockOut += change;
             }
             else
             {
-                throw new Exception("Invalid transaction type");
+                throw new Exception("Invalid transaction type.");
             }
 
             item.UpdatedAt = DateTime.Now;
 
+
+            // Recalculate LifeTimeDays using the current quantity.
+            if (item.LifeTime.HasValue)
+            {
+                item.LifeTimeDays =
+                    ((decimal)item.Quantity * item.LifeTime.Value) / 2400m;
+            }
+
+
+            // Record the stock transaction.
             var transaction = new Transaction
             {
                 ItemId = itemId,
                 Quantity = change,
-                Type = type,
+                Type = string.Equals(
+                    type, "Out", StringComparison.OrdinalIgnoreCase) ? "Out" : "In",
                 Balance = item.Quantity,
                 TransactionDate = DateTime.Now
             };
+
             _context.Transactions.Add(transaction);
+
+            // Save Quantity, StockOut, UpdatedAt and the transaction together.
             await _context.SaveChangesAsync();
+
             return item;
         }
+
 
         public async Task<bool> DeleteItem(int id)
         {

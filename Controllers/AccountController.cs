@@ -34,20 +34,21 @@ namespace Store_Management.Controllers
             if (ModelState.IsValid)
             {
                 var user = await _dataService.AuthenticateUser(
-                    model.Username,
+                    model.EmployeeId,
                     model.Password
                 );
 
                 if (user != null)
                 {
                     HttpContext.Session.SetString("LoggedIn", "true");
+                    HttpContext.Session.SetString("EmployeeId", user.EmployeeId);
                     HttpContext.Session.SetString("Username", user.Username);
                     HttpContext.Session.SetString("Role", user.Role);
 
                     return RedirectToAction("BrandSelection", "Account");
                 }
 
-                ViewBag.Error = "Invalid username or password.";
+                ViewBag.Error = "Invalid Employee ID or password.";
             }
 
             return View(model);
@@ -101,6 +102,114 @@ namespace Store_Management.Controllers
             HttpContext.Session.Clear();
 
             return RedirectToAction("Login");
+        }
+
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View(new RegisterViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Check whether Employee ID already exists
+            var employeeExists =
+                await _dataService.EmployeeIdExists(model.EmployeeId);
+
+            if (employeeExists)
+            {
+                ViewBag.Error =
+                    "This Employee ID is already registered.";
+
+                return View(model);
+            }
+
+            try
+            {
+                await _dataService.RegisterUser(
+                    model.EmployeeId,
+                    model.Name,
+                    model.Password,
+                    model.Role
+                );
+
+                TempData["Success"] =
+                    "Account created successfully. Please login.";
+
+                return RedirectToAction("Login");
+            }
+            catch (Exception)
+            {
+                ViewBag.Error =
+                    "Unable to create account. Please try again.";
+
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(
+            ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var employeeExists =
+                await _dataService.EmployeeIdExists(
+                    model.EmployeeId.Trim()
+                );
+
+            if (!employeeExists)
+            {
+                ViewBag.Error =
+                    "Employee ID not found.";
+
+                return View(model);
+            }
+
+            try
+            {
+                var passwordUpdated =
+                    await _dataService.ResetPassword(
+                        model.EmployeeId.Trim(),
+                        model.NewPassword
+                    );
+
+                if (!passwordUpdated)
+                {
+                    ViewBag.Error =
+                        "Unable to reset password. Please try again.";
+
+                    return View(model);
+                }
+
+                TempData["Success"] =
+                    "Password reset successfully. Please login with your new password.";
+
+                return RedirectToAction("Login");
+            }
+            catch (Exception)
+            {
+                ViewBag.Error =
+                    "Unable to reset password. Please try again.";
+
+                return View(model);
+            }
         }
     }
 }

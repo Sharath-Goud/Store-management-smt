@@ -85,7 +85,6 @@
                 </strong>
 
                 <span class="summary-description">
-                    Registered inventory items
                 </span>
 
             </div>
@@ -218,530 +217,193 @@
 
         </div>
 
+
+
         <div class="table-container">
-
             <table class="inventory-table">
-
                 <thead>
-
                     <tr>
-
-                        <th class="image-column">
-                            Product
-                        </th>
-
-                        <th>
-                            Part Number
-                        </th>
-
-                        <th>
-                            Item Name
-                        </th>
-
-                        <th>
-                            Available Stock
-                        </th>
-
-                        <th>
-                            Stock Update
-                        </th>
-
-                        <th>
-                            Action
-                        </th>
-
+                        <th>Image</th>
+                        <th>Part Number</th>
+                        <th>Model Number</th>
+                        <th>Project Code</th>
+                        <th>Description</th>
+                        <th>Total Quantity</th>
+                        <th>Good Quantity</th>
+                        <th>Bad Quantity</th>
+                        <th>Status</th>
                     </tr>
-
                 </thead>
 
-
                 <tbody>
-
                     @if (Model.Items != null && Model.Items.Any())
                     {
-
                         foreach (var item in Model.Items)
                         {
-
                             <tr class="inventory-row"
                                 data-part-number="@item.PartNumber"
                                 data-item-name="@item.ItemName">
 
+
+                                <!-- Product image -->
                                 <td>
-
                                     <div class="product-image-wrapper">
-
                                         @if (!string.IsNullOrWhiteSpace(item.ImagePath))
                                         {
                                             <img src="@item.ImagePath"
-                                                 class="product-image"
-                                                 alt="@item.ItemName" />
+                                                 class="product-image clickable-product-image"
+                                                 alt="@item.ItemName"
+                                                 title="Click to view full image"
+                                                 onclick="openImagePopup(this.src, this.alt)" />
                                         }
                                         else
                                         {
-                                            <div class="no-image">
-                                                📦
-                                            </div>
+                                            <div class="no-image">📦</div>
                                         }
-
                                     </div>
-
                                 </td>
 
+
+                        <!-- Part Number -->
+                        <td>
+                            <div class="part-number">@item.PartNumber</div>
+                        </td>
+
+                        <!-- Model Number -->
+                        <td>
+                            @(string.IsNullOrWhiteSpace(item.ModelNumber)
+                                                        ? "—"
+                                                        : item.ModelNumber)
+                                                                       </td>
+
+                        <!-- Project Code -->
+                        <td>
+                            @(string.IsNullOrWhiteSpace(item.ProjectCode)
+                                                        ? "—"
+                                                        : item.ProjectCode)
+                        </td>
+
+                                <!-- Item Name -->
                                 <td>
-
-                                    <div class="part-number">
-
-                                        @item.PartNumber
-
-                                    </div>
-
-                                </td>
-
-                                <td>
-
                                     <div class="item-info">
-
-                                        <strong>
-                                            @item.ItemName
-                                        </strong>
-
-                                        <span>
-                                            Inventory Item
-                                        </span>
-
+                                        <strong>@item.ItemName</strong>
                                     </div>
-
                                 </td>
 
+                                <!-- Total Quantity = Quantity + StockOut -->
                                 <td>
+                                    <span class="quantity-badge total">
+                                        @(item.Quantity + item.StockOut)
+                                    </span>
+                                </td>
 
-                                    @if (item.Quantity <= 10)
+                                <!-- Good Quantity = Quantity -->
+                                <td>
+                                    <span class="quantity-badge good">
+                                        @item.Quantity
+                                    </span>
+                                </td>
+
+                                <!-- Bad Quantity (NG) = StockOut -->
+                                <td>
+                                    <span class="quantity-badge bad">
+                                        @item.StockOut
+                                    </span>
+                                </td>
+
+
+                                <!-- Safety Status -->
+                                <td class="safety-cell">
+                            @if (item.LifeTimeDays.HasValue &&
+                                                        item.LeadTimeDays.HasValue)
                                     {
-
-                                        <span class="stock-badge low">
-                                            <span class="stock-dot"></span>
-                                            @item.Quantity
-                                            <small>Low Stock</small>
-                                        </span>
-
+                                        if (item.LifeTimeDays.Value > item.LeadTimeDays.Value)
+                                        {
+                                            <span class="safety-badge safe">
+                                                <span class="safety-dot"></span>
+                                                Safe
+                                            </span>
+                                        }
+                                        else if (item.LifeTimeDays.Value < item.LeadTimeDays.Value)
+                                        {
+                                            <span class="safety-badge not-safe">
+                                                <span class="safety-dot"></span>
+                                                Not Safe
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="safety-badge review">
+                                                Review
+                                            </span>
+                                        }
                                     }
                                     else
                                     {
-
-                                        <span class="stock-badge available">
-                                            <span class="stock-dot"></span>
-                                            @item.Quantity
-                                            <small>Available</small>
+                                        <span class="safety-badge pending">
+                                            Pending
                                         </span>
-
                                     }
-
-                                </td>
-
-
-
-                                <td>
-
-                                    <form asp-action="Update"
-                                          method="post"
-                                          class="stock-update-form">
-
-                                        <input type="hidden"
-                                               name="id"
-                                               value="@item.Id" />
-
-                                        <input class="stock-input"
-                                               name="quantity"
-                                               type="number"
-                                               min="1"
-                                               placeholder="Qty"
-                                               required />
-
-                                        <button name="actionType"
-                                                value="in"
-                                                class="stock-in"
-                                                type="submit"
-                                                title="Add stock">
-
-                                            <span>+</span>
-                                            In
-
-                                        </button>
-
-                                        <button name="actionType"
-                                                value="out"
-                                                class="stock-out"
-                                                type="submit"
-                                                title="Remove stock">
-
-                                            <span>−</span>
-                                            Out
-
-                                        </button>
-
-                                    </form>
-
-                                </td>
-
-
-                                <td>
-
-                                    <button class="delete-action"
-                                            type="button"
-                                            onclick="confirmDelete(@item.Id, this)">
-
-                                        🗑
-                                        <span>Delete</span>
-
-                                    </button>
-
-
-                                    <form id="delete-@item.Id"
-                                          asp-action="Delete"
-                                          method="post"
-                                          class="hidden">
-
-                                        <input type="hidden"
-                                               name="id"
-                                               value="@item.Id" />
-
-                                    </form>
-
                                 </td>
 
                             </tr>
-
-                        }
-
-                        <tr id="noSearchResults" style="display:none;">
-                            <td colspan="6">
-                                <div class="empty-state">
-
-                                    <div class="empty-icon">
-                                        🔍
-                                    </div>
-
-                                    <h3>
-                                        No matching items found
-                                    </h3>
-
-                                    <p>
-                                        No Part Number or Item Name matches your search.
-                                    </p>
-
-                                </div>
-                            </td>
-                        </tr>
+                                        }
                     }
                     else
                     {
-
                         <tr>
-
-                            <td colspan="6">
-
+                            <td colspan="9">
                                 <div class="empty-state">
-
-                                    <div class="empty-icon">
-                                        📦
-                                    </div>
-
-                                    <h3>
-                                        No inventory items found
-                                    </h3>
-
-                                    <p>
-                                        There are no items matching your search.
-                                    </p>
-
-                                    @if (!string.IsNullOrEmpty(Model.Search))
-                                    {
-                                        <a asp-action="Index"
-                                           class="empty-btn">
-
-                                            Clear Search
-
-                                        </a>
-                                    }
-
+                                    <div class="empty-icon">📦</div>
+                                    <h3>No inventory items found</h3>
+                                    <p>There are no items matching your search.</p>
                                 </div>
-
                             </td>
-
                         </tr>
-
                     }
 
+                    <!-- Search result message -->
+                    <tr id="noSearchResults" style="display: none;">
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <div class="empty-icon">🔍</div>
+                                <h3>No matching items found</h3>
+                                <p>No Part Number or Item Name matches your search.</p>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
-
             </table>
-
         </div>
+
+
 
     </section>
 
-    <section class="reports-card">
-
-        <!-- REPORT HEADER -->
-        <div class="reports-header">
-
-            <div class="reports-icon">
-                📈
-            </div>
-
-            <div class="reports-header-text">
-                <h2>Export & Reports</h2>
-
-                <p>
-                    Download inventory and stock movement reports
-                </p>
-            </div>
-
-        </div>
-
-
-        <!-- REPORT OPTIONS -->
-        <div class="reports-content">
-
-
-            <!-- ================= CURRENT STOCK ================= -->
-            <a class="report-option"
-               asp-action="ExportCurrentStock"
-               asp-route-brandId="@ViewBag.BrandId">
-
-                <div class="report-option-icon">
-                    📥
-                </div>
-
-                <div class="report-option-text">
-
-                    <strong>
-                        Download Current Stock
-                    </strong>
-
-                    <span>
-                        Export available inventory
-                    </span>
-
-                </div>
-
-            </a>
-
-
-
-            <!-- ================= MONTHLY REPORT LABEL ================= -->
-            <div class="monthly-label">
-
-                <div class="monthly-icon">
-                    🗓️
-                </div>
-
-                <div class="monthly-label-text">
-
-                    <strong>Monthly</strong>
-                    <strong>Stock</strong>
-                    <strong>Report</strong>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- ================= MONTHLY REPORT FORM ================= -->
-            <form asp-action="MonthlyReport"
-                  method="get"
-                  class="monthly-report-form">
-
-
-                <!-- MONTH -->
-                <select name="month"
-                        class="report-select">
-
-                    @for (int m = 1; m <= 12; m++)
-                    {
-                        var monthName =
-                        System.Globalization.CultureInfo
-                        .CurrentCulture
-                        .DateTimeFormat
-                        .GetMonthName(m);
-
-                        <option value="@m"
-                                selected="@(m == DateTime.Now.Month)">
-                            @monthName
-                        </option>
-                    }
-
-                </select>
-
-
-
-                <!-- YEAR -->
-                <select name="year"
-                        class="report-select">
-
-                    @for (int y = DateTime.Now.Year - 2;
-                                        y <= DateTime.Now.Year + 2;
-                                        y++)
-                    {
-                        <option value="@y"
-                                selected="@(y == DateTime.Now.Year)">
-                            @y
-                        </option>
-                    }
-
-                </select>
-
-
-
-                <!-- DOWNLOAD -->
-                <button type="submit"
-                        class="download-report-btn">
-
-                    <span class="download-icon">
-                        ↓
-                    </span>
-
-                    <span class="download-text">
-                        Download<br />
-                        Report
-                    </span>
-
-                </button>
-
-            </form>
-
-        </div>
-
-    </section>
-
-
-    <section class="history-card">
-
-        <div class="history-header">
-
-            <div>
-                <h2>
-                    Transaction History
-                </h2>
-
-                <p>
-                    Recent inventory movements
-                </p>
-            </div>
-
-            <span class="history-count" id="historyCount">
-                @(Model.History?.Count() ?? 0)
-                Transactions
-            </span>
-
-        </div>
-
-
-        @if (Model.History != null && Model.History.Any())
-        {
-
-            <div class="history-list" id="historyList">
-
-                @foreach (var row in Model.History)
-                {
-
-                    <div class="history-item">
-
-                        <div class="history-icon @(row.Change >= 0 ? "history-in" : "history-out")">
-
-                            @(row.Change >= 0 ? "+" : "−")
-
-                        </div>
-
-
-                        <div class="history-details">
-
-                            <strong>
-                                @(row.Change >= 0
-                                                        ? "Stock Added"
-                                                        : "Stock Removed")
-                    </strong>
-
-                            <span>
-                                @row.TransactionDate.ToString("dd MMM yyyy, HH:mm:ss")
-                            </span>
-
-                        </div>
-
-
-                        <div class="history-quantity @(row.Change >= 0 ? "positive" : "negative")">
-
-                            @(row.Change >= 0 ? "+" : "")
-                            @row.Change q
-
-                        </div>
-
-
-                        <div class="history-balance">
-
-                            <span>
-                                Balance
-                            </span>
-
-                            <strong>
-                                @row.Balance
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                        }
-
-            </div>
-
-
-            <!-- Pagination -->
-            <div class="history-pagination" id="historyPagination">
-
-                <button type="button"
-                        class="pagination-btn pagination-prev"
-                        id="historyPrev">
-                    ‹
-                </button>
-
-                <div class="pagination-pages" id="historyPages">
-                </div>
-
-                <button type="button"
-                        class="pagination-btn pagination-next"
-                        id="historyNext">
-                    ›
-                </button>
-
-            </div>
-
-        }
-        else
-        {
-
-            <div class="history-empty">
-
-                <div>
-                    ↔
-                </div>
-
-                <h3>
-                    No transactions yet
-                </h3>
-
-                <p>
-                    Stock movements will appear here.
-                </p>
-
-            </div>
-
-        }
-
-    </section>
-
+    
+</div>
+
+<!-- Product Image Popup -->
+<div id="imagePopup" class="image-popup"
+     onclick="closeImagePopup(event)">
+
+    <button type="button"
+            class="image-popup-close"
+            onclick="closeImagePopup(event)"
+            aria-label="Close image">
+        &times;
+    </button>
+
+    <div class="image-popup-content"
+         onclick="event.stopPropagation()">
+
+        <img id="popupImage"
+             src=""
+             alt="Product image preview" />
+
+        <div id="popupImageCaption"
+             class="image-popup-caption"></div>
+    </div>
 </div>
 
 
@@ -764,9 +426,8 @@
 
     .inventory-container {
         width: 100%;
-        max-width: 1600px;
+        max-width: none;
         margin: 0 auto;
-        padding: 32px;
     }
 
     .inventory-header {
@@ -1021,16 +682,205 @@
             color: #ef4444;
         }
 
+
+
+    /* Table scrolls independently of the page */
     .table-container {
+        display: block;
         width: 100%;
+        max-width: 100%;
         overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #94a3b8 #edf2f7;
     }
 
+    /* Use the available screen width, expanding when necessary */
     .inventory-table {
         width: 100%;
-        border-collapse: collapse;
-        min-width: 1050px;
+        min-width: 1250px;
+        table-layout: auto;
+        border-collapse: separate;
+        border-spacing: 0;
     }
+
+        /* Column headers */
+        .inventory-table thead th {
+            background: #1765c1;
+            color: #ffffff;
+            padding: 17px 18px;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: left;
+            line-height: 1.4;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        /* Table cells */
+        .inventory-table tbody td {
+            padding: 18px;
+            border-bottom: 1px solid #e9eef5;
+            vertical-align: middle;
+            white-space: normal;
+            overflow-wrap: break-word;
+        }
+
+        .inventory-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .inventory-table tbody tr:hover {
+            background: #f8fbff;
+        }
+
+        /* Give important columns sufficient space */
+        .inventory-table th:nth-child(1),
+        .inventory-table td:nth-child(1) {
+            min-width: 105px;
+        }
+
+        .inventory-table th:nth-child(2),
+        .inventory-table td:nth-child(2) {
+            min-width: 180px;
+        }
+
+        .inventory-table th:nth-child(3),
+        .inventory-table td:nth-child(3) {
+            min-width: 145px;
+        }
+
+        .inventory-table th:nth-child(4),
+        .inventory-table td:nth-child(4) {
+            min-width: 135px;
+        }
+
+        .inventory-table th:nth-child(5),
+        .inventory-table td:nth-child(5) {
+            min-width: 220px;
+        }
+
+        .inventory-table th:nth-child(6),
+        .inventory-table td:nth-child(6),
+        .inventory-table th:nth-child(7),
+        .inventory-table td:nth-child(7),
+        .inventory-table th:nth-child(8),
+        .inventory-table td:nth-child(8) {
+            min-width: 145px;
+            text-align: center;
+        }
+
+        .inventory-table th:nth-child(9),
+        .inventory-table td:nth-child(9) {
+            min-width: 105px;
+            text-align: center;
+        }
+
+        /* Quantity badges */
+        .inventory-table .quantity-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 68px;
+            min-height: 44px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 750;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        /* Delete button must never split into multiple lines */
+        .inventory-table .delete-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            min-width: 80px;
+            padding: 9px 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 650;
+            white-space: nowrap;
+            word-break: normal;
+            overflow-wrap: normal;
+            cursor: pointer;
+        }
+
+            .inventory-table .delete-action:hover {
+                background: #fff1f2;
+                color: #dc2626;
+            }
+
+    /* Scrollbar visible on the table container */
+    .table-container::-webkit-scrollbar {
+        height: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+        background: #edf2f7;
+        border-radius: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 10px;
+    }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+
+        .inventory-table th,
+        .inventory-table td {
+            padding: 14px 12px;
+            vertical-align: middle;
+        }
+
+        .inventory-table th {
+            white-space: normal;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .inventory-table td {
+            overflow-wrap: anywhere;
+        }
+
+        /* Professional quantity display */
+        .inventory-table .quantity-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 58px;
+            padding: 9px 12px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 750;
+            font-variant-numeric: tabular-nums;
+        }
+
+            .inventory-table .quantity-badge.total {
+                background: #eff6ff;
+                color: #1d4ed8;
+            }
+
+            .inventory-table .quantity-badge.good {
+                background: #ecfdf5;
+                color: #047857;
+            }
+
+            .inventory-table .quantity-badge.bad {
+                background: #fff1f2;
+                color: #be123c;
+            }
+
 
         .inventory-table thead {
             background: #f8fafc;
@@ -1149,57 +999,7 @@
         background: currentColor;
     }
 
-    .stock-update-form {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
 
-    .stock-input {
-        width: 75px;
-        height: 36px;
-        border: 1px solid #dbe1e9;
-        border-radius: 8px;
-        padding: 0 9px;
-        outline: none;
-        font-size: 12px;
-        background: #ffffff;
-    }
-
-        .stock-input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
-        }
-
-    .stock-in,
-    .stock-out {
-        height: 36px;
-        border: 0;
-        padding: 0 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .stock-in {
-        background: #ecfdf5;
-        color: #047857;
-    }
-
-    .stock-out {
-        background: #fff1f2;
-        color: #be123c;
-    }
-
-    .stock-in:hover {
-        background: #d1fae5;
-    }
-
-    .stock-out:hover {
-        background: #ffe4e6;
-    }
 
     .delete-action {
         border: 0;
@@ -2049,6 +1849,200 @@
             height: 34px;
         }
     }
+
+
+    /* Inventory quantity badges */
+    .inventory-table .quantity-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 58px;
+        padding: 9px 12px;
+        border-radius: 9px;
+        font-size: 14px;
+        font-weight: 750;
+        font-variant-numeric: tabular-nums;
+    }
+
+        .inventory-table .quantity-badge.total {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .inventory-table .quantity-badge.good {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .inventory-table .quantity-badge.bad {
+            background: #fff1f2;
+            color: #be123c;
+        }
+
+    .inventory-table th {
+        white-space: normal;
+        line-height: 1.4;
+    }
+
+    .inventory-table td {
+        vertical-align: middle;
+    }
+
+
+        /* Safety status column */
+        .inventory-table th:nth-child(9),
+        .inventory-table td:nth-child(9) {
+            min-width: 125px;
+            text-align: center;
+        }
+
+    /* Common badge */
+    .safety-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 9px 14px;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 750;
+        white-space: nowrap;
+        border: 1px solid transparent;
+    }
+
+        /* Safe: transparent green */
+        .safety-badge.safe {
+            color: #047857;
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.30);
+        }
+
+        /* Not Safe: transparent red */
+        .safety-badge.not-safe {
+            color: #be123c;
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.30);
+        }
+
+        /* Equal values */
+        .safety-badge.review {
+            color: #92400e;
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.30);
+        }
+
+        /* Missing calculated values */
+        .safety-badge.pending {
+            color: #64748b;
+            background: rgba(148, 163, 184, 0.12);
+            border-color: rgba(148, 163, 184, 0.25);
+        }
+
+    /* Small status indicator */
+    .safety-dot {
+        width: 7px;
+        height: 7px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+
+    /* Clickable product thumbnail */
+    .product-image.clickable-product-image {
+        cursor: zoom-in;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .product-image.clickable-product-image:hover {
+            transform: scale(1.06);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.18);
+        }
+
+    /* Full-screen image popup */
+    .image-popup {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        background: rgba(15, 23, 42, 0.82);
+        backdrop-filter: blur(5px);
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+    }
+
+        .image-popup.show {
+            display: flex;
+        }
+
+    .image-popup-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 90vw;
+        max-height: 90vh;
+    }
+
+        .image-popup-content img {
+            display: block;
+            max-width: 85vw;
+            max-height: 78vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            background: #fff;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+    .image-popup-caption {
+        margin-top: 14px;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .image-popup-close {
+        position: absolute;
+        top: 20px;
+        right: 28px;
+        width: 44px;
+        height: 44px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        font-size: 32px;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+        .image-popup-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+    @@media (max-width: 600px) {
+        .image-popup
+
+    {
+        padding: 15px;
+    }
+
+    .image-popup-content img {
+        max-width: 92vw;
+        max-height: 75vh;
+    }
+
+    .image-popup-close {
+        top: 12px;
+        right: 12px;
+    }
+
+    }
 </style>
 
 
@@ -2495,6 +2489,45 @@
             showPage(1);
 
         });
+
+
+        function openImagePopup(imageSrc, imageName) {
+            const popup = document.getElementById("imagePopup");
+            const popupImage = document.getElementById("popupImage");
+            const caption = document.getElementById("popupImageCaption");
+
+            if (!popup || !popupImage) return;
+
+            popupImage.src = imageSrc;
+            popupImage.alt = imageName || "Product image preview";
+
+            if (caption) {
+                caption.textContent = imageName || "";
+            }
+
+            popup.classList.add("show");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeImagePopup(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const popup = document.getElementById("imagePopup");
+
+            if (!popup) return;
+
+            popup.classList.remove("show");
+            document.body.style.overflow = "";
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                closeImagePopup();
+            }
+        });
+
 
     </script>
 

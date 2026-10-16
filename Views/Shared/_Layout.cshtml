@@ -205,27 +205,40 @@
 
 
             <li>
-
-                <a href="@Url.Action("AddItem", "Store")"
-                   class="@(ViewContext.RouteData.Values["action"]?.ToString() == "AddItem" ? "active" : "")">
-
-                    Add Item / Stock In
-
-                </a>
-
-            </li>
-
-            <li>
-
                 <a asp-controller="Store"
                    asp-action="Index"
-                   asp-route-brandId="@ViewBag.BrandId"
-                   class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
-
+                   asp-route-brandId="@(
+                   ViewBag.BrandId
+                   ?? Context.Session.GetInt32("SelectedBrandId")
+              )"
+                   class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Index"
+                              ? "active" : "")">
                     Inventory
-
                 </a>
+            </li>
 
+
+            <li>
+                <a asp-controller="Store"
+                   asp-action="StockInOut"
+                   asp-route-brandId="@(ViewBag.BrandId
+                              ?? Context.Session.GetInt32("SelectedBrandId"))"
+                   class="@(ViewContext.RouteData.Values["action"]?.ToString()
+                              == "StockInOut" ? "active" : "")">
+                    Stock In / Stock Out
+                </a>
+            </li>
+
+
+            <li>
+                <a asp-controller="Store"
+                   asp-action="ReportsHistory"
+                   asp-route-brandId="@(ViewBag.BrandId
+                              ?? Context.Session.GetInt32("SelectedBrandId"))"
+                   class="@(ViewContext.RouteData.Values["action"]?.ToString()
+                              == "ReportsHistory" ? "active" : "")">
+                    Reports and History
+                </a>
             </li>
 
         </ul>

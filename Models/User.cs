@@ -8,6 +8,10 @@ namespace Store_Management.Models
         public int Id { get; set; }
 
         [Required]
+        [StringLength(50)]
+        public string EmployeeId { get; set; } = string.Empty;
+
+        [Required]
         [StringLength(100)]
         public string Username { get; set; } = string.Empty;
 

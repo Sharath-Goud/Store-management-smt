@@ -1,7 +1,10 @@
 ﻿@model List<Store_Management.Models.Item>
 
 @{
-    ViewData["Title"] = "Add Item / Stock In";
+    var operation = ViewBag.Operation as string ?? "In";
+    bool isStockOut = operation == "Out";
+
+    ViewData["Title"] = isStockOut ? "Stock Out" : "Stock In";
 }
 
 
@@ -29,24 +32,14 @@
         <div>
 
             <h1>
-                Add Item / Stock In
+                @(isStockOut ? "Stock Out" : "Stock In")
             </h1>
 
             <p>
-                Register new inventory item into store management system
+                @(isStockOut
+                                ? "Remove inventory items from the store management system"
+                                : "Register new inventory item into store management system")
             </p>
-
-            @* <div class="selected-project">
-
-                <span class="project-label">
-                    Selected Project:
-                </span>
-
-                <span class="project-name">
-                    @ViewBag.BrandName
-                </span>
-
-            </div> *@
 
         </div>
 
@@ -54,7 +47,7 @@
 
     <section class="inventory-card">
 
-        <form asp-action="AddItem"
+        <form asp-action="@(isStockOut ? "StockOut" : "AddItem")"
               method="post"
               enctype="multipart/form-data">
 
@@ -108,7 +101,7 @@
 
 
                         <label>
-                            Item Name
+                            Description
                             <span>*</span>
                         </label>
 
@@ -134,6 +127,78 @@
                                required />
 
                     </div>
+
+
+                    <!-- MODEL NUMBER -->
+                    <div class="input-box">
+                        <label>
+                            Model Number <span>*</span>
+                        </label>
+
+                        <input id="modelNumber"
+                               name="modelNumber"
+                               type="text"
+                               placeholder="Enter model number"
+                               required />
+                    </div>
+
+                    <!-- PROJECT CODE -->
+                    <div class="input-box">
+                        <label>
+                            Project Code <span>*</span>
+                        </label>
+
+                        <input id="projectCode"
+                               name="projectCode"
+                               type="text"
+                               placeholder="Enter project code"
+                               required />
+                    </div>
+
+                    <div class="input-box">
+                        <label>
+                            Life Time <span>*</span>
+                        </label>
+
+                        <input id="lifeTime"
+                               name="lifeTime"
+                               type="number"
+                               min="1"
+                               step="1"
+                               placeholder="Enter life time"
+                               required />
+                    </div>
+
+                    <!-- LEAD TIME -->
+                    <div class="input-box">
+                        <label>
+                            Safety Date <span>*</span>
+                        </label>
+
+                        <input id="leadTime"
+                               name="leadTime"
+                               type="number"
+                               min="1"
+                               step="1"
+                               placeholder="Enter lead time"
+                               required />
+                    </div>
+
+                    <!-- STATUS DROPDOWN -->
+                    <div class="input-box">
+                        <label>
+                            Status <span>*</span>
+                        </label>
+
+                        <select id="status"
+                                name="status"
+                                required>
+                            <option value="">Select Status</option>
+                            <option value="Good">Good</option>
+                            <option value="NG">NG</option>
+                        </select>
+                    </div>
+
 
                 </div>
 
@@ -196,7 +261,7 @@
                 <button class="save-btn"
                         type="submit">
 
-                    Add Item / Stock In
+                    @(isStockOut ? "Stock Out" : "Stock In")
 
                 </button>
 
@@ -613,51 +678,51 @@
 
         });
 
-        document.addEventListener("paste", function (event) {
+        // document.addEventListener("paste", function (event) {
 
-            const clipboardData = event.clipboardData;
+        //     const clipboardData = event.clipboardData;
 
-            if (!clipboardData) {
-                return;
-            }
-
-
-            const items = clipboardData.items;
-
-            if (!items) {
-                return;
-            }
+        //     if (!clipboardData) {
+        //         return;
+        //     }
 
 
-            for (let i = 0; i < items.length; i++) {
+        //     const items = clipboardData.items;
 
-                const item = items[i];
-
-                if (item.type.indexOf("image") !== -1) {
-
-                    event.preventDefault();
-
-                    const file = item.getAsFile();
-
-                    if (!file) {
-                        return;
-                    }
-
-                    const dataTransfer = new DataTransfer();
-
-                    dataTransfer.items.add(file);
-
-                    photoInput.files = dataTransfer.files;
-
-                    showImage(file);
+        //     if (!items) {
+        //         return;
+        //     }
 
 
-                    break;
-                }
+        //     for (let i = 0; i < items.length; i++) {
 
-            }
+        //         const item = items[i];
 
-        });
+        //         if (item.type.indexOf("image") !== -1) {
+
+        //             event.preventDefault();
+
+        //             const file = item.getAsFile();
+
+        //             if (!file) {
+        //                 return;
+        //             }
+
+        //             const dataTransfer = new DataTransfer();
+
+        //             dataTransfer.items.add(file);
+
+        //             photoInput.files = dataTransfer.files;
+
+        //             showImage(file);
+
+
+        //             break;
+        //         }
+
+        //     }
+
+        // });
 
         uploadBox.addEventListener("dragover", function (event) {
 
@@ -685,7 +750,7 @@
             uploadBox.style.borderColor = "#94a3b8";
             uploadBox.style.background = "#f8fafc";
 
-
+                
             const files = event.dataTransfer.files;
 
 

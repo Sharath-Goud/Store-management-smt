@@ -199,10 +199,6 @@ namespace Store_Management.Controllers
                             .ToList()
                 };
 
-            // ============================================================
-            // BRAND INFORMATION
-            // ============================================================
-
             ViewBag.BrandId =
                 brand.BrandId;
 
@@ -213,12 +209,11 @@ namespace Store_Management.Controllers
         }
 
 
-        // ============================================================
-        // ADD ITEM - GET
-        // ============================================================
 
         [HttpGet]
-        public async Task<IActionResult> AddItem(int brandId)
+        public async Task<IActionResult> AddItem(
+            int brandId,
+            string operation = "In")
         {
             if (string.IsNullOrEmpty(
                 HttpContext.Session.GetString("LoggedIn")))
@@ -226,180 +221,183 @@ namespace Store_Management.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-
             // Get selected brand
-            var brand =
-                await _dataService.GetBrandById(brandId);
-
+            var brand = await _dataService.GetBrandById(brandId);
 
             if (brand == null)
             {
-                TempData["Error"] =
-                    "Brand not found.";
-
+                TempData["Error"] = "Brand not found.";
                 return RedirectToAction("Index", "Store");
             }
 
+            // Get items belonging to this brand
+            var items = await _dataService.GetItemsByBrand(brandId);
 
-            // Get only items belonging to this brand
-            var items =
-                await _dataService.GetItemsByBrand(
-                    brandId);
-
-
-            // Send selected brand information to View
+            // Send brand information to the view
             ViewBag.BrandId = brand.BrandId;
-
             ViewBag.BrandName = brand.BrandName;
 
+            // Send selected operation to the view
+            ViewBag.Operation = operation == "Out" ? "Out" : "In";
 
-            // Send brand-specific items to View
             return View(items);
         }
 
 
-        // ============================================================
-        // ADD ITEM - POST
-        // ============================================================
-
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddItem(
-            int brandId,
-            string partNumber,
-            string itemName,
-            int quantity,
-            IFormFile photo)
+    int brandId,
+    string partNumber,
+    string itemName,
+    int quantity,
+    string? modelNumber,
+    string? projectCode,
+    int? lifeTime,
+    int? leadTime,
+    string? status,
+    IFormFile? photo)
         {
-            if (string.IsNullOrEmpty(
-                HttpContext.Session.GetString("LoggedIn")))
+            // 1. Check login session
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("LoggedIn")))
             {
                 return RedirectToAction("Login", "Account");
             }
 
-
             try
             {
-                // --------------------------------------------
-                // Validate Brand
-                // --------------------------------------------
+                // 2. Validate quantity
+                if (quantity <= 0)
+                {
+                    TempData["Error"] = "Quantity must be greater than zero.";
 
-                var brand =
-                    await _dataService.GetBrandById(
-                        brandId);
+                    return RedirectToAction(
+                        "AddItem",
+                        new { brandId, operation = "In" });
+                }
 
+                // 3. Validate required fields
+                if (string.IsNullOrWhiteSpace(partNumber) ||
+                    string.IsNullOrWhiteSpace(itemName) ||
+                    string.IsNullOrWhiteSpace(modelNumber) ||
+                    string.IsNullOrWhiteSpace(projectCode) ||
+                    !lifeTime.HasValue ||
+                    lifeTime.Value <= 0 ||
+                    !leadTime.HasValue ||
+                    leadTime.Value <= 0 ||
+                    string.IsNullOrWhiteSpace(status))
+                {
+                    TempData["Error"] =
+                        "Please fill in all required fields. " +
+                        "Life Time and Lead Time must be greater than zero.";
+
+                    return RedirectToAction(
+                        "AddItem",
+                        new { brandId, operation = "In" });
+                }
+
+                // 4. Validate status
+                status = status.Trim();
+
+                if (status != "Good" && status != "NG")
+                {
+                    TempData["Error"] = "Please select a valid status.";
+
+                    return RedirectToAction(
+                        "AddItem",
+                        new { brandId, operation = "In" });
+                }
+
+                // 5. Get selected brand
+                var brand = await _dataService.GetBrandById(brandId);
 
                 if (brand == null)
                 {
-                    TempData["Error"] =
-                        "Invalid brand selected.";
+                    TempData["Error"] = "Invalid brand selected.";
 
                     return RedirectToAction("Index", "Store");
                 }
 
+                // LifeTimeDays = LifeTime * 3000 / 2400
+                decimal lifeTimeDays =
+                    ((decimal)quantity * lifeTime.Value) / 2400m;
 
-                // --------------------------------------------
-                // Create Item
-                // --------------------------------------------
+                // LeadTimeDays = (LeadTime * 2400) / 2400
+                decimal leadTimeDays =
+                    (leadTime.Value * 2400m) / 2400m;
 
+                // 7. Create item with original and calculated values
                 var item = new Item
                 {
                     BrandId = brand.BrandId,
-
-                    // Keep BrandName for existing data
                     BrandName = brand.BrandName,
 
-                    PartNumber = partNumber?.Trim(),
+                    PartNumber = partNumber.Trim(),
+                    ItemName = itemName.Trim(),
+                    Quantity = quantity,
 
-                    ItemName = itemName?.Trim(),
+                    ModelNumber = modelNumber.Trim(),
+                    ProjectCode = projectCode.Trim(),
 
-                    Quantity = quantity
+                    // Original input values
+                    LifeTime = lifeTime.Value,
+                    LeadTime = leadTime.Value,
+
+                    // Calculated values
+                    LifeTimeDays = lifeTimeDays,
+                    LeadTimeDays = leadTimeDays,
+
+                    Status = status
                 };
 
-
-                // --------------------------------------------
-                // Upload Image
-                // --------------------------------------------
-
-                if (photo != null &&
-                    photo.Length > 0)
+                // 8. Upload image if provided
+                if (photo != null && photo.Length > 0)
                 {
-                    var uploadsFolder =
-                        Path.Combine(
-                            Directory.GetCurrentDirectory(),
-                            "wwwroot",
-                            "uploads");
+                    var uploadsFolder = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        "uploads");
 
+                    Directory.CreateDirectory(uploadsFolder);
 
-                    if (!Directory.Exists(
-                        uploadsFolder))
+                    var extension = Path.GetExtension(photo.FileName);
+                    var uniqueFileName = Guid.NewGuid().ToString() + extension;
+
+                    var filePath = Path.Combine(
+                        uploadsFolder,
+                        uniqueFileName);
+
+                    using (var stream = new FileStream(
+                        filePath,
+                        FileMode.Create))
                     {
-                        Directory.CreateDirectory(
-                            uploadsFolder);
+                        await photo.CopyToAsync(stream);
                     }
 
-
-                    var uniqueFileName =
-                        Guid.NewGuid().ToString()
-                        + "_"
-                        + photo.FileName;
-
-
-                    var filePath =
-                        Path.Combine(
-                            uploadsFolder,
-                            uniqueFileName);
-
-
-                    using (var stream =
-                        new FileStream(
-                            filePath,
-                            FileMode.Create))
-                    {
-                        await photo.CopyToAsync(
-                            stream);
-                    }
-
-
-                    item.ImagePath =
-                        "/uploads/"
-                        + uniqueFileName;
+                    item.ImagePath = "/uploads/" + uniqueFileName;
                 }
 
-
-                // --------------------------------------------
-                // Save Item
-                // --------------------------------------------
-
+                // 9. Save item to database
                 await _dataService.AddItem(item);
-
 
                 TempData["Success"] =
                     $"Item added successfully to {brand.BrandName}!";
             }
             catch (Exception ex)
             {
+                // Log the actual exception
+                Console.Error.WriteLine(ex);
+
                 TempData["Error"] =
-                    $"Error adding item: {ex.Message}";
+                    "Unable to save the item. Please check the application logs.";
             }
 
-
-            // --------------------------------------------
-            // IMPORTANT:
-            // Stay on the selected brand
-            // --------------------------------------------
-
+            // 10. Return to Stock In page
             return RedirectToAction(
                 "AddItem",
-                new
-                {
-                    brandId = brandId
-                });
+                new { brandId, operation = "In" });
         }
 
-
-        // ============================================================
-        // UPDATE STOCK
-        // ============================================================
 
         [HttpPost]
         public async Task<IActionResult> Update(
@@ -461,10 +459,6 @@ namespace Store_Management.Controllers
         }
 
 
-        // ============================================================
-        // DELETE ITEM
-        // ============================================================
-
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
@@ -513,10 +507,6 @@ namespace Store_Management.Controllers
         }
 
 
-        // ============================================================
-        // EDIT ITEM - GET
-        // ============================================================
-
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -542,10 +532,6 @@ namespace Store_Management.Controllers
             return View(item);
         }
 
-
-        // ============================================================
-        // EDIT ITEM - POST
-        // ============================================================
 
         [HttpPost]
         public async Task<IActionResult> Edit(Item item)
@@ -576,10 +562,6 @@ namespace Store_Management.Controllers
             return View(item);
         }
 
-
-        // ============================================================
-        // TRANSACTIONS
-        // ============================================================
 
         [HttpGet]
         public async Task<IActionResult> Transactions(int id)
@@ -614,10 +596,6 @@ namespace Store_Management.Controllers
             return View(transactions);
         }
 
-
-        // ============================================================
-        // EXPORT CURRENT STOCK - BRAND SPECIFIC
-        // ============================================================
 
         public async Task<IActionResult> ExportCurrentStock(
             int brandId)
@@ -669,11 +647,6 @@ namespace Store_Management.Controllers
                 "text/csv",
                 $"StockReport_{brand.BrandName}_{DateTime.Now:yyyyMMdd}.csv");
         }
-
-
-        // ============================================================
-        // MONTHLY REPORT
-        // ============================================================
 
         public async Task<IActionResult> MonthlyReport(
             int month,
@@ -736,5 +709,199 @@ namespace Store_Management.Controllers
                 "text/csv",
                 $"MonthlyReport_{monthName}_{year}.csv");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ReportsHistory(int? brandId)
+        {
+            // 1. Check login
+            if (HttpContext.Session.GetString("LoggedIn") != "true")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // 2. Get selected brand from session if not passed in URL
+            if (!brandId.HasValue)
+            {
+                brandId = HttpContext.Session.GetInt32("SelectedBrandId");
+            }
+
+            // 3. If no brand is selected, go to brand selection
+            if (!brandId.HasValue)
+            {
+                TempData["Error"] = "Please select a brand first.";
+                return RedirectToAction("Index", "BrandSelection");
+            }
+
+            // 4. Get the selected brand
+            var brand = await _dataService.GetBrandById(brandId.Value);
+
+            if (brand == null)
+            {
+                HttpContext.Session.Remove("SelectedBrandId");
+                TempData["Error"] = "Selected brand was not found.";
+                return RedirectToAction("Index", "BrandSelection");
+            }
+
+            // 5. Save the selected brand in session
+            HttpContext.Session.SetInt32("SelectedBrandId", brand.BrandId);
+
+            // 6. Get items only for the selected brand
+            var items = await _dataService.GetItemsByBrand(brand.BrandId)
+                         ?? new List<Item>();
+
+            // 7. Get transaction history for those items
+            var history = items
+                .Where(item => item.Transactions != null)
+                .SelectMany(item => item.Transactions)
+                .OrderByDescending(transaction => transaction.TransactionDate)
+                .ToList();
+
+            // 8. Prepare the view model
+            var viewModel = new StoreViewModel
+            {
+                Items = items.ToList(),
+                Search = string.Empty,
+                History = history
+            };
+
+            // 9. Pass brand information to the view
+            ViewBag.BrandId = brand.BrandId;
+            ViewBag.BrandName = brand.BrandName;
+
+            // 10. Open Views/Store/ReportsHistory.cshtml
+            return View("ReportsHistory", viewModel);
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> StockInOut(int? brandId)
+        {
+            if (HttpContext.Session.GetString("LoggedIn") != "true")
+                return RedirectToAction("Login", "Account");
+
+            if (!brandId.HasValue)
+                brandId = HttpContext.Session.GetInt32("SelectedBrandId");
+
+            if (!brandId.HasValue)
+            {
+                TempData["Error"] = "Please select a brand first.";
+                return RedirectToAction("Index", "BrandSelection");
+            }
+
+            var brand = await _dataService.GetBrandById(brandId.Value);
+
+            if (brand == null)
+            {
+                TempData["Error"] = "Selected brand was not found.";
+                return RedirectToAction("Index", "BrandSelection");
+            }
+
+            HttpContext.Session.SetInt32("SelectedBrandId", brand.BrandId);
+            ViewBag.BrandId = brand.BrandId;
+            ViewBag.BrandName = brand.BrandName;
+
+            return View("StockInOut");
+        }
+
+
+        // STOCK OUT PAGE
+        [HttpGet]
+        public async Task<IActionResult> StockOut(int? brandId)
+        {
+            if (HttpContext.Session.GetString("LoggedIn") != "true")
+                return RedirectToAction("Login", "Account");
+
+            if (!brandId.HasValue)
+                brandId = HttpContext.Session.GetInt32("SelectedBrandId");
+
+            if (!brandId.HasValue)
+            {
+                TempData["Error"] = "Please select a brand first.";
+                return RedirectToAction("Index", "BrandSelection");
+            }
+
+            var brand = await _dataService.GetBrandById(brandId.Value);
+
+            if (brand == null)
+            {
+                TempData["Error"] = "Selected brand was not found.";
+                return RedirectToAction("Index", "BrandSelection");
+            }
+
+            HttpContext.Session.SetInt32("SelectedBrandId", brand.BrandId);
+
+            var items = await _dataService.GetItemsByBrand(brand.BrandId)
+                        ?? new List<Item>();
+
+            ViewBag.BrandId = brand.BrandId;
+            ViewBag.BrandName = brand.BrandName;
+
+            return View("StockOut", items.ToList());
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StockOutItem(
+            int id,
+            int brandId,
+            int quantity,
+            string? remarks)
+        {
+            if (HttpContext.Session.GetString("LoggedIn") != "true")
+                return RedirectToAction("Login", "Account");
+
+            if (quantity <= 0)
+            {
+                TempData["Error"] = "Quantity must be greater than zero.";
+                return RedirectToAction("StockOut", new { brandId });
+            }
+
+            var item = await _dataService.GetItemById(id);
+
+            if (item == null || item.BrandId != brandId)
+            {
+                TempData["Error"] = "Item not found for the selected brand.";
+                return RedirectToAction("StockOut", new { brandId });
+            }
+
+            if (item.Quantity < quantity)
+            {
+                TempData["Error"] =
+                    $"Insufficient stock. Available quantity: {item.Quantity}.";
+
+                return RedirectToAction("StockOut", new { brandId });
+            }
+
+            try
+            {
+                // Reduce stock and record the Out transaction.
+                await _dataService.UpdateItemQuantity(id, quantity, "Out");
+
+                // Reload the item to get the updated quantity.
+                item = await _dataService.GetItemById(id);
+
+                if (item != null)
+                {
+                    item.Remarks = string.IsNullOrWhiteSpace(remarks)
+                        ? null
+                        : remarks.Trim();
+
+                    await _dataService.UpdateItem(item);
+                }
+
+                TempData["Success"] =
+                    $"Stock Out successful. Removed quantity: {quantity}.";
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex);
+                TempData["Error"] =
+                    "Stock Out failed. Please check the application logs.";
+            }
+
+            return RedirectToAction("StockOut", new { brandId });
+        }
+
     }
 }

@@ -10,10 +10,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Store Management - Login</title>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
 
     <style>
+
         * {
             margin: 0;
             padding: 0;
@@ -25,8 +30,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: "Segoe UI",Arial,sans-serif;
-            background: linear-gradient( 180deg, #111827, #020617 )
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(180deg, #111827, #020617);
         }
 
         .login-page {
@@ -95,6 +100,10 @@
             font-size: 14px;
         }
 
+        .form-group {
+            margin-bottom: 20px;
+        }
+
         label {
             display: block;
             font-size: 14px;
@@ -110,7 +119,6 @@
             border: 1px solid #d1d5db;
             background: #f9fafb;
             font-size: 15px;
-            margin-bottom: 22px;
             transition: .3s;
         }
 
@@ -125,7 +133,43 @@
                 color: #9ca3af;
             }
 
-        button {
+        .field-error {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+            .password-wrapper input {
+                padding-right: 45px;
+            }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 18px;
+            width: auto;
+            padding: 0;
+            box-shadow: none;
+        }
+
+            .toggle-password:hover {
+                background: transparent;
+                transform: translateY(-50%);
+                box-shadow: none;
+            }
+
+        .login-button {
             width: 100%;
             padding: 14px;
             border: none;
@@ -136,17 +180,37 @@
             font-weight: 600;
             cursor: pointer;
             transition: .3s;
+            margin-top: 5px;
         }
 
-            button:hover {
+            .login-button:hover {
                 background: #1d4ed8;
                 transform: translateY(-2px);
                 box-shadow: 0 10px 20px rgba(37,99,235,.25);
             }
 
-            button:active {
+            .login-button:active {
                 transform: translateY(0);
             }
+
+        .account-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 22px;
+            font-size: 13px;
+        }
+
+            .account-links a {
+                text-decoration: none;
+                font-weight: 600;
+                color: #2563eb;
+            }
+
+                .account-links a:hover {
+                    color: #1d4ed8;
+                    text-decoration: underline;
+                }
 
         .footer-text {
             text-align: center;
@@ -156,26 +220,39 @@
         }
 
         @@media(max-width:480px) {
+
             .login-card {
                 padding: 35px 25px;
             }
+
+            .account-links {
+                font-size: 12px;
+            }
         }
+
     </style>
 </head>
 
 <body>
 
     <div class="login-page">
+
         <div class="login-card">
 
-            <div class="brand-icon">📦</div>
+            <!-- Icon -->
+            <div class="brand-icon">
+                📦
+            </div>
 
+            <!-- Title -->
             <h1>Store Management</h1>
 
             <p class="subtitle">
                 Secure Inventory Management System
             </p>
 
+
+            <!-- Error Message -->
             @if (ViewBag.Error != null)
             {
                 <div class="alert">
@@ -183,33 +260,114 @@
                 </div>
             }
 
-            <form asp-action="Login" method="post">
 
-                <label>Username</label>
+            <!-- Login Form -->
+            <form asp-action="Login"
+                  method="post"
+                  autocomplete="off">
 
-                <input asp-for="Username"
-                       placeholder="Enter username"
-                       autocomplete="username" />
+                <!-- Employee ID -->
+                <div class="form-group">
 
-                <label>Password</label>
+                    <label asp-for="EmployeeId">
+                        Employee ID
+                    </label>
 
-                <input asp-for="Password"
-                       type="password"
-                       placeholder="Enter password"
-                       autocomplete="current-password" />
+                    <input asp-for="EmployeeId"
+                           placeholder="Enter employee ID"
+                           autocomplete="username" />
 
-                <button type="submit">
+                    <span asp-validation-for="EmployeeId"
+                          class="field-error">
+                    </span>
+
+                </div>
+
+
+                <!-- Password -->
+                <div class="form-group">
+
+                    <label asp-for="Password">
+                        Password
+                    </label>
+
+                    <div class="password-wrapper">
+
+                        <input asp-for="Password"
+                               type="password"
+                               id="password"
+                               placeholder="Enter password"
+                               autocomplete="current-password" />
+
+                        <button type="button"
+                                class="toggle-password"
+                                onclick="togglePassword()">
+                            👁
+                        </button>
+
+                    </div>
+
+                    <span asp-validation-for="Password"
+                          class="field-error">
+                    </span>
+
+                </div>
+
+
+                <!-- Login Button -->
+                <button type="submit"
+                        class="login-button">
                     Login
                 </button>
 
+
+                <!-- Forgot / Create Account -->
+                <div class="account-links">
+
+                    <a asp-controller="Account"
+                       asp-action="ForgotPassword">
+                        Forgot Password?
+                    </a>
+
+                    <a asp-controller="Account"
+                       asp-action="Register">
+                        Create Account
+                    </a>
+
+                </div>
+
             </form>
 
+
+            <!-- Footer -->
             <div class="footer-text">
                 © @DateTime.Now.Year Store Management System
             </div>
 
         </div>
+
     </div>
+
+
+    <script>
+
+        function togglePassword() {
+
+            const password = document.getElementById("password");
+
+            if (password.type === "password") {
+
+                password.type = "text";
+
+            }
+            else {
+
+                password.type = "password";
+
+            }
+        }
+
+    </script>
 
 </body>
 </html>

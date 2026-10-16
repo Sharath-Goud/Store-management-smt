@@ -1,0 +1,157 @@
+﻿
+@{
+    ViewData["Title"] = "Stock In / Stock Out";
+    var brandId = ViewBag.BrandId;
+}
+
+<div class="action-page">
+    <div class="action-card">
+        <div class="action-header">
+            <h1>Stock In / Stock Out</h1>
+            <p>Select the stock operation you want to perform.</p>
+
+            <div class="brand-label">
+                Brand: <strong>@ViewBag.BrandName</strong>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a asp-controller="Store"
+               asp-action="AddItem"
+               asp-route-brandId="@brandId"
+               asp-route-operation="In"
+               class="action-btn stock-in">
+
+                <span class="action-icon">＋</span>
+                <span>Stock In</span>
+                <small>Add items to inventory</small>
+            </a>
+
+            <a asp-controller="Store"
+               asp-action="StockOut"
+               asp-route-brandId="@brandId"
+               asp-route-operation="Out"
+               class="action-btn stock-out">
+
+                <span class="action-icon">－</span>
+                <span>Stock Out</span>
+                <small>Remove items from inventory</small>
+            </a>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .action-page {
+        max-width: 900px;
+        margin: 35px auto;
+        padding: 15px;
+    }
+
+    .action-card {
+        background: #fff;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 12px 35px rgba(15, 23, 42, .10);
+        border: 1px solid #e2e8f0;
+    }
+
+    .action-header {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .action-header h1 {
+        color: #0f172a;
+        font-size: 30px;
+        margin-bottom: 10px;
+    }
+
+    .action-header p {
+        color: #64748b;
+        font-size: 15px;
+    }
+
+    .brand-label {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 10px 18px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        color: #334155;
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 25px;
+    }
+
+    .action-btn {
+        min-height: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        border-radius: 18px;
+        color: white;
+        text-decoration: none;
+        font-size: 25px;
+        font-weight: 700;
+        transition: transform .25s, box-shadow .25s;
+    }
+
+    .stock-in {
+        background: linear-gradient(135deg, #16a34a, #166534);
+        box-shadow: 0 10px 22px rgba(22, 163, 74, .25);
+    }
+
+    .stock-out {
+        background: linear-gradient(135deg, #ef4444, #991b1b);
+        box-shadow: 0 10px 22px rgba(239, 68, 68, .25);
+    }
+
+    .action-btn:hover {
+        color: white;
+        transform: translateY(-5px);
+    }
+
+    .stock-in:hover {
+        box-shadow: 0 16px 30px rgba(22, 163, 74, .35);
+    }
+
+    .stock-out:hover {
+        box-shadow: 0 16px 30px rgba(239, 68, 68, .35);
+    }
+
+    .action-icon {
+        font-size: 48px;
+        line-height: 1;
+    }
+
+    .action-btn small {
+        font-size: 13px;
+        font-weight: 400;
+        opacity: .9;
+    }
+
+    @@media (max-width: 600px) {
+        .action-card {
+            padding: 22px;
+        }
+
+        .action-buttons {
+            grid-template-columns: 1fr;
+        }
+
+        .action-btn {
+            min-height: 160px;
+        }
+
+        .action-header h1 {
+            font-size: 24px;
+        }
+    }
+</style>

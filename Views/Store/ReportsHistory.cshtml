@@ -1,0 +1,1648 @@
+﻿@model Store_Management.Models.StoreViewModel
+
+@{
+    ViewData["Title"] = "Reports and History";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="toast-message toast-success">
+        <div class="toast-icon">✓</div>
+        <div><strong>Success</strong><span>@TempData["Success"]</span></div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="toast-message toast-error">
+        <div class="toast-icon">!</div>
+        <div><strong>Error</strong><span>@TempData["Error"]</span></div>
+    </div>
+}
+
+<div class="reports-history-container">
+    <div class="reports-history-heading">
+        
+        <h1>Reports and History</h1>
+        <p>Download stock reports and review recent inventory movements</p>
+        @if (ViewBag.BrandName != null)
+        {
+            <span class="selected-brand">Brand: @ViewBag.BrandName</span>
+        }
+    </div>
+
+    <section class="reports-card">
+
+        <!-- REPORT HEADER -->
+        <div class="reports-header">
+
+            <div class="reports-icon">
+                📈
+            </div>
+
+            <div class="reports-header-text">
+                <h2>Export & Reports</h2>
+
+                <p>
+                    Download inventory and stock movement reports
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- REPORT OPTIONS -->
+        <div class="reports-content">
+
+
+            <!-- ================= CURRENT STOCK ================= -->
+            <a class="report-option"
+               asp-action="ExportCurrentStock"
+               asp-route-brandId="@ViewBag.BrandId">
+
+                <div class="report-option-icon">
+                    📥
+                </div>
+
+                <div class="report-option-text">
+
+                    <strong>
+                        Download Current Stock
+                    </strong>
+
+                    <span>
+                        Export available inventory
+                    </span>
+
+                </div>
+
+            </a>
+
+
+
+            <!-- ================= MONTHLY REPORT LABEL ================= -->
+            <div class="monthly-label">
+
+                <div class="monthly-icon">
+                    🗓️
+                </div>
+
+                <div class="monthly-label-text">
+
+                    <strong>Monthly</strong>
+                    <strong>Stock</strong>
+                    <strong>Report</strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ================= MONTHLY REPORT FORM ================= -->
+            <form asp-controller="Store" asp-action="MonthlyReport" method="get" class="monthly-report-form">
+                <input type="hidden" name="brandId" value="@ViewBag.BrandId" />
+
+
+                <!-- MONTH -->
+                <select name="month"
+                        class="report-select">
+
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        var monthName =
+                        System.Globalization.CultureInfo
+                        .CurrentCulture
+                        .DateTimeFormat
+                        .GetMonthName(m);
+
+                        <option value="@m"
+                                selected="@(m == DateTime.Now.Month)">
+                            @monthName
+                        </option>
+                    }
+
+                </select>
+
+
+
+                <!-- YEAR -->
+                <select name="year"
+                        class="report-select">
+
+                    @for (int y = DateTime.Now.Year - 2;
+                                        y <= DateTime.Now.Year + 2;
+                                        y++)
+                    {
+                        <option value="@y"
+                                selected="@(y == DateTime.Now.Year)">
+                            @y
+                        </option>
+                    }
+
+                </select>
+
+
+
+                <!-- DOWNLOAD -->
+                <button type="submit"
+                        class="download-report-btn">
+
+                    <span class="download-icon">
+                        ↓
+                    </span>
+
+                    <span class="download-text">
+                        Download<br />
+                        Report
+                    </span>
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <section class="history-card">
+
+        <div class="history-header">
+
+            <div>
+                <h2>
+                    Transaction History
+                </h2>
+
+                <p>
+                    Recent inventory movements
+                </p>
+            </div>
+
+            <span class="history-count" id="historyCount">
+                @(Model.History?.Count() ?? 0)
+                Transactions
+            </span>
+
+        </div>
+
+
+        @if (Model.History != null && Model.History.Any())
+        {
+
+            <div class="history-list" id="historyList">
+
+                @foreach (var row in Model.History)
+                {
+
+                    <div class="history-item">
+
+                        <div class="history-icon @(row.Change >= 0 ? "history-in" : "history-out")">
+
+                            @(row.Change >= 0 ? "+" : "−")
+
+                        </div>
+
+
+                        <div class="history-details">
+
+                            <strong>
+                                @(row.Change >= 0
+                                                        ? "Stock Added"
+                                                        : "Stock Removed")
+                    </strong>
+
+                            <span>
+                                @row.TransactionDate.ToString("dd MMM yyyy, HH:mm:ss")
+                            </span>
+
+                        </div>
+
+
+                        <div class="history-quantity @(row.Change >= 0 ? "positive" : "negative")">
+
+                            @(row.Change >= 0 ? "+" : "")
+                            @row.Change q
+
+                        </div>
+
+
+                        <div class="history-balance">
+
+                            <span>
+                                Balance
+                            </span>
+
+                            <strong>
+                                @row.Balance
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                        }
+
+            </div>
+
+
+            <!-- Pagination -->
+            <div class="history-pagination" id="historyPagination">
+
+                <button type="button"
+                        class="pagination-btn pagination-prev"
+                        id="historyPrev">
+                    ‹
+                </button>
+
+                <div class="pagination-pages" id="historyPages">
+                </div>
+
+                <button type="button"
+                        class="pagination-btn pagination-next"
+                        id="historyNext">
+                    ›
+                </button>
+
+            </div>
+
+        }
+        else
+        {
+
+            <div class="history-empty">
+
+                <div>
+                    ↔
+                </div>
+
+                <h3>
+                    No transactions yet
+                </h3>
+
+                <p>
+                    Stock movements will appear here.
+                </p>
+
+            </div>
+
+        }
+
+    </section>
+</div>
+
+<style>
+    .reports-history-container {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 32px;
+        box-sizing: border-box;
+    }
+
+    .reports-history-heading {
+        margin-bottom: 24px;
+    }
+
+    .reports-history-breadcrumb {
+        margin-bottom: 7px;
+        font-size: 13px;
+        color: #8a94a6;
+    }
+
+        .reports-history-breadcrumb span {
+            padding: 0 6px;
+        }
+
+    .reports-history-heading h1 {
+        margin: 0;
+        color: #172033;
+        font-size: 30px;
+        font-weight: 800;
+    }
+
+    .reports-history-heading p {
+        margin: 6px 0 0;
+        color: #7b8494;
+        font-size: 14px;
+    }
+
+    .selected-brand {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 6px 10px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .toast-message {
+        position: fixed;
+        top: 25px;
+        right: 25px;
+        z-index: 9999;
+        min-width: 300px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 17px;
+        border-radius: 12px;
+        box-shadow: 0 15px 35px rgba(15,23,42,.18);
+        animation: slideIn .35s ease;
+    }
+
+        .toast-message strong, .toast-message span {
+            display: block;
+        }
+
+        .toast-message span {
+            margin-top: 3px;
+            font-size: 12px;
+        }
+
+    .toast-icon {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 800;
+    }
+
+    .toast-success {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+    }
+
+        .toast-success .toast-icon {
+            background: #10b981;
+        }
+
+    .toast-error {
+        background: #fff1f2;
+        border: 1px solid #fecdd3;
+        color: #9f1239;
+    }
+
+        .toast-error .toast-icon {
+            background: #ef4444;
+        }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .reports-card {
+        width: 100%;
+        margin-top: 25px;
+        padding: 28px 32px 32px 32px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        overflow: hidden;
+    }
+
+    .reports-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+
+    .reports-icon {
+        width: 52px;
+        height: 52px;
+        flex: 0 0 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+        background: #f3f0ff;
+        font-size: 24px;
+    }
+
+    .reports-header-text {
+        min-width: 0;
+    }
+
+
+    .reports-header h2 {
+        margin: 0;
+        color: #0757b8;
+        font-size: 21px;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+
+    .reports-header p {
+        margin: 5px 0 0;
+        color: #718096;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .reports-content {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .report-option {
+        flex: 0 0 245px;
+        width: 245px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 18px;
+        box-sizing: border-box;
+        text-decoration: none;
+        border: 1px solid #dbe3ee;
+        border-radius: 12px;
+        background: #ffffff;
+        transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+
+        .report-option:hover {
+            border-color: #2563eb;
+            background: #f8fbff;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.08);
+        }
+
+
+    .report-option-icon {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+
+    .report-option-text {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+
+        .report-option-text strong {
+            color: #111827;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+
+        .report-option-text span {
+            margin-top: 4px;
+            color: #8a97aa;
+            font-size: 12px;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+
+    .monthly-label {
+        flex: 0 0 110px;
+        width: 110px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+
+
+    .monthly-icon {
+        flex: 0 0 auto;
+        font-size: 17px;
+        line-height: 1;
+    }
+
+
+    .monthly-label-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        line-height: 1.15;
+    }
+
+
+        .monthly-label-text strong {
+            color: #172033;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.15;
+        }
+
+    .monthly-report-form {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+
+    .report-select {
+        flex: 1 1 0;
+        min-width: 0;
+        width: 100%;
+        height: 52px;
+        padding: 0 42px 0 17px;
+        border: 1px solid #d8e0eb;
+        border-radius: 11px;
+        background-color: #ffffff;
+        color: #1f2937;
+        font-size: 16px;
+        outline: none;
+        cursor: pointer;
+        box-sizing: border-box;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+
+        .report-select:hover {
+            border-color: #b7c3d4;
+        }
+
+
+        .report-select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+
+
+    .download-report-btn {
+        flex: 0 0 136px;
+        width: 136px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient( 135deg, #2563eb, #1d5bd7 );
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.05;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+
+        .download-report-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 22px rgba(37, 99, 235, 0.30);
+        }
+
+
+        .download-report-btn:active {
+            transform: translateY(0);
+        }
+
+
+    .download-icon {
+        font-size: 27px;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+
+    .download-text {
+        display: block;
+        text-align: center;
+        line-height: 1.05;
+    }
+
+    .history-card {
+        margin-top: 25px;
+        background: #ffffff;
+        border: 1px solid #e7ebf2;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
+    }
+
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .history-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .history-header p {
+            margin: 5px 0 0;
+            color: #8a94a6;
+            font-size: 13px;
+        }
+
+    .history-count {
+        padding: 7px 11px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        font-size: 11px;
+        color: #64748b;
+        font-weight: 700;
+    }
+
+    .history-list {
+        margin-top: 20px;
+    }
+
+    .history-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 5px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+        .history-item:last-child {
+            border-bottom: 0;
+        }
+
+    .history-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 18px;
+    }
+
+    .history-in {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .history-out {
+        background: #fff1f2;
+        color: #e11d48;
+    }
+
+    .history-details {
+        margin-left: 13px;
+        flex: 1;
+    }
+
+        .history-details strong {
+            display: block;
+            font-size: 13px;
+        }
+
+        .history-details span {
+            display: block;
+            margin-top: 3px;
+            color: #9aa3b2;
+            font-size: 11px;
+        }
+
+    .history-quantity {
+        width: 100px;
+        font-weight: 800;
+        font-size: 14px;
+    }
+
+        .history-quantity.positive {
+            color: #059669;
+        }
+
+        .history-quantity.negative {
+            color: #e11d48;
+        }
+
+    .history-balance {
+        width: 120px;
+        text-align: right;
+    }
+
+        .history-balance span {
+            display: block;
+            color: #9aa3b2;
+            font-size: 10px;
+        }
+
+        .history-balance strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 14px;
+        }
+
+    .history-empty {
+        text-align: center;
+        padding: 50px;
+        color: #8992a2;
+    }
+
+        .history-empty > div {
+            font-size: 30px;
+        }
+
+        .history-empty h3 {
+            color: #334155;
+            margin: 12px 0 5px;
+            font-size: 16px;
+        }
+
+        .history-empty p {
+            margin: 0;
+            font-size: 12px;
+        }
+
+    .toast-message {
+        position: fixed;
+        top: 25px;
+        right: 25px;
+        z-index: 9999;
+        min-width: 300px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 17px;
+        border-radius: 12px;
+        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.18);
+        animation: slideIn 0.35s ease;
+    }
+
+        .toast-message strong,
+        .toast-message span {
+            display: block;
+        }
+
+        .toast-message span {
+            margin-top: 3px;
+            font-size: 12px;
+        }
+
+    .toast-icon {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-weight: 800;
+    }
+
+    .toast-success {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+    }
+
+        .toast-success .toast-icon {
+            background: #10b981;
+        }
+
+    .toast-error {
+        background: #fff1f2;
+        border: 1px solid #fecdd3;
+        color: #9f1239;
+    }
+
+        .toast-error .toast-icon {
+            background: #ef4444;
+        }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @@media (max-width: 1200px) {
+
+        .reports-card {
+            padding: 25px;
+        }
+
+        .reports-content {
+            gap: 10px;
+        }
+
+        .report-option {
+            flex: 0 0 220px;
+            width: 220px;
+        }
+
+        .monthly-label {
+            flex: 0 0 100px;
+            width: 100px;
+        }
+
+        .monthly-report-form {
+            gap: 10px;
+        }
+
+        .download-report-btn {
+            flex: 0 0 120px;
+            width: 120px;
+        }
+    }
+
+
+    @@media (max-width: 950px) {
+
+        .reports-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+
+        .report-option {
+            width: 100%;
+            flex: none;
+            grid-column: 1 / -1;
+        }
+
+
+        .monthly-label {
+            width: 100%;
+            flex: none;
+            grid-column: 1 / -1;
+        }
+
+
+        .monthly-report-form {
+            width: 100%;
+            flex: none;
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+
+        .report-select {
+            width: 100%;
+            flex: none;
+        }
+
+
+        .download-report-btn {
+            width: 100%;
+            flex: none;
+            grid-column: 1 / -1;
+        }
+    }
+
+
+    @@media (max-width: 768px) {
+
+        .reports-card {
+            padding: 20px;
+            border-radius: 18px;
+        }
+
+
+        .reports-header {
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+
+        .reports-icon {
+            width: 46px;
+            height: 46px;
+            flex-basis: 46px;
+            font-size: 21px;
+        }
+
+
+        .reports-header h2 {
+            font-size: 19px;
+        }
+
+
+        .reports-header p {
+            font-size: 13px;
+        }
+
+
+        .reports-content {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+
+        .report-option {
+            width: 100%;
+            height: 75px;
+            flex: none;
+        }
+
+
+        .monthly-label {
+            width: 100%;
+            height: 60px;
+            flex: none;
+        }
+
+
+        .monthly-report-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: none;
+        }
+
+
+        .report-select {
+            width: 100%;
+            height: 50px;
+            flex: none;
+        }
+
+
+        .download-report-btn {
+            width: 100%;
+            height: 50px;
+            flex: none;
+        }
+    }
+
+
+    @@media (max-width: 550px) {
+
+        .reports-card {
+            padding: 18px;
+        }
+
+
+        .reports-header {
+            gap: 12px;
+        }
+
+
+            .reports-header h2 {
+                font-size: 18px;
+            }
+
+
+            .reports-header p {
+                font-size: 12px;
+            }
+
+
+        .report-option {
+            height: 74px;
+            padding: 0 15px;
+        }
+
+
+        .report-option-text strong {
+            font-size: 14px;
+        }
+
+
+        .report-option-text span {
+            font-size: 11px;
+        }
+
+
+        .monthly-label {
+            height: 55px;
+        }
+
+
+        .monthly-label-text strong {
+            font-size: 13px;
+        }
+
+
+        .report-select {
+            height: 48px;
+            font-size: 14px;
+        }
+
+
+        .download-report-btn {
+            height: 48px;
+        }
+    }
+
+    .history-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #edf0f5;
+    }
+
+    .pagination-pages {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .pagination-btn {
+        min-width: 38px;
+        height: 38px;
+        padding: 0 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dbe3ee;
+        border-radius: 9px;
+        background: #ffffff;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .pagination-btn:hover:not(:disabled) {
+            border-color: #2563eb;
+            background: #f8fbff;
+            color: #2563eb;
+        }
+
+        .pagination-btn.active {
+            border-color: #2563eb;
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+    .pagination-number {
+        min-width: 38px;
+        height: 38px;
+        padding: 0 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dbe3ee;
+        border-radius: 9px;
+        background: #ffffff;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .pagination-number:hover {
+            border-color: #2563eb;
+            background: #f8fbff;
+            color: #2563eb;
+        }
+
+        .pagination-number.active {
+            border-color: #2563eb;
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+    .pagination-dots {
+        min-width: 30px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .history-item.history-hidden {
+        display: none;
+    }
+
+
+    /* Mobile */
+    @@media (max-width: 600px) {
+        .history-pagination {
+            gap: 4px;
+            margin-top: 20px;
+            padding-top: 16px;
+        }
+
+        .pagination-btn,
+        .pagination-number {
+            min-width: 34px;
+            height: 34px;
+            font-size: 12px;
+            padding: 0 7px;
+        }
+
+        .pagination-pages {
+            gap: 3px;
+        }
+
+        .pagination-dots {
+            min-width: 24px;
+            height: 34px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .reports-history-container {
+            padding: 18px;
+        }
+
+        .reports-history-heading h1 {
+            font-size: 24px;
+        }
+    }
+</style>
+
+@section Scripts {
+
+    <script>
+
+        function confirmDelete(id, btn) {
+
+            if (btn.dataset.confirmed === 'true') {
+
+                document.getElementById('delete-' + id).submit();
+
+                return;
+            }
+
+            btn.dataset.confirmed = 'true';
+
+            btn.innerHTML = '⚠ Confirm Delete';
+
+            btn.style.backgroundColor = '#fee2e2';
+            btn.style.color = '#dc2626';
+
+            setTimeout(function () {
+
+                btn.dataset.confirmed = '';
+
+                btn.innerHTML = '🗑 Delete';
+
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+
+            }, 3000);
+
+        }
+
+        setTimeout(function () {
+
+            const toast = document.querySelector('.toast-message');
+
+            if (toast) {
+
+                toast.style.opacity = '0';
+
+                toast.style.transform = 'translateX(30px)';
+
+                toast.style.transition = '.4s';
+
+                setTimeout(function () {
+
+                    toast.remove();
+
+                }, 400);
+
+            }
+
+        }, 4000);
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const searchInput =
+                document.getElementById("inventorySearch");
+
+            const clearButton =
+                document.getElementById("clearSearch");
+
+            const rows =
+                document.querySelectorAll(".inventory-row");
+
+            const noSearchResults =
+                document.getElementById("noSearchResults");
+
+
+            if (!searchInput) {
+                return;
+            }
+
+
+            function filterInventory() {
+
+                const searchText =
+                    searchInput.value
+                        .trim()
+                        .toLowerCase();
+
+
+                let visibleCount = 0;
+
+
+                rows.forEach(function (row) {
+
+                    const partNumber =
+                        (
+                            row.getAttribute("data-part-number") || ""
+                        ).toLowerCase();
+
+
+                    const itemName =
+                        (
+                            row.getAttribute("data-item-name") || ""
+                        ).toLowerCase();
+
+
+                    // Match Part Number OR Item Name
+                    const matches =
+                        partNumber.includes(searchText) ||
+                        itemName.includes(searchText);
+
+
+                    if (matches) {
+
+                        row.style.display = "";
+
+                        visibleCount++;
+
+                    }
+                    else {
+
+                        row.style.display = "none";
+
+                    }
+
+                });
+
+                if (searchText.length > 0) {
+
+                    clearButton.style.display = "block";
+
+                }
+                else {
+
+                    clearButton.style.display = "none";
+
+                }
+
+                if (noSearchResults) {
+
+                    if (
+                        visibleCount === 0 &&
+                        searchText.length > 0
+                    ) {
+
+                        noSearchResults.style.display = "table-row";
+
+                    }
+                    else {
+
+                        noSearchResults.style.display = "none";
+
+                    }
+
+                }
+
+            }
+
+            searchInput.addEventListener(
+                "input",
+                function () {
+
+                    filterInventory();
+
+                }
+            );
+
+            if (clearButton) {
+
+                clearButton.addEventListener(
+                    "click",
+                    function () {
+
+                        searchInput.value = "";
+
+                        filterInventory();
+
+                        searchInput.focus();
+
+                    }
+                );
+
+            }
+
+            filterInventory();
+
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const historyList =
+                document.getElementById("historyList");
+
+            const pagination =
+                document.getElementById("historyPagination");
+
+            const pagesContainer =
+                document.getElementById("historyPages");
+
+            const previousButton =
+                document.getElementById("historyPrev");
+
+            const nextButton =
+                document.getElementById("historyNext");
+
+
+            if (!historyList || !pagination) {
+                return;
+            }
+
+
+            const historyItems =
+                Array.from(
+                    historyList.querySelectorAll(".history-item")
+                );
+
+
+            const recordsPerPage = 10;
+
+            const totalRecords =
+                historyItems.length;
+
+            const totalPages =
+                Math.ceil(totalRecords / recordsPerPage);
+
+
+            let currentPage = 1;
+
+            if (totalPages <= 1) {
+
+                pagination.style.display = "none";
+
+                historyItems.forEach(function (item) {
+                    item.classList.remove("history-hidden");
+                });
+
+                return;
+            }
+
+            function showPage(page) {
+
+                currentPage = page;
+
+
+                const startIndex =
+                    (currentPage - 1) * recordsPerPage;
+
+
+                const endIndex =
+                    startIndex + recordsPerPage;
+
+
+                historyItems.forEach(function (item, index) {
+
+                    if (
+                        index >= startIndex &&
+                        index < endIndex
+                    ) {
+
+                        item.classList.remove("history-hidden");
+
+                    }
+                    else {
+
+                        item.classList.add("history-hidden");
+
+                    }
+
+                });
+
+
+                renderPagination();
+
+                previousButton.disabled =
+                    currentPage === 1;
+
+                nextButton.disabled =
+                    currentPage === totalPages;
+
+                historyList.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }
+
+            function renderPagination() {
+
+                pagesContainer.innerHTML = "";
+
+                if (totalPages <= 7) {
+
+                    for (
+                        let page = 1;
+                        page <= totalPages;
+                        page++
+                    ) {
+
+                        createPageButton(page);
+
+                    }
+
+                    return;
+                }
+
+                createPageButton(1);
+
+
+                if (currentPage <= 4) {
+
+                    createPageButton(2);
+                    createPageButton(3);
+                    createPageButton(4);
+                    createPageButton(5);
+
+                    createDots();
+
+                    createPageButton(totalPages);
+
+                }
+
+                else if (
+                    currentPage >= totalPages - 3
+                ) {
+
+                    createDots();
+
+                    createPageButton(totalPages - 4);
+                    createPageButton(totalPages - 3);
+                    createPageButton(totalPages - 2);
+                    createPageButton(totalPages - 1);
+                    createPageButton(totalPages);
+
+                }
+
+                else {
+
+                    createDots();
+
+                    createPageButton(
+                        currentPage - 1
+                    );
+
+                    createPageButton(
+                        currentPage
+                    );
+
+                    createPageButton(
+                        currentPage + 1
+                    );
+
+                    createDots();
+
+                    createPageButton(totalPages);
+
+                }
+
+            }
+
+            function createPageButton(page) {
+
+                const button =
+                    document.createElement("button");
+
+
+                button.type = "button";
+
+                button.className =
+                    "pagination-number";
+
+
+                button.textContent =
+                    page;
+
+
+                if (page === currentPage) {
+
+                    button.classList.add("active");
+
+                }
+
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        showPage(page);
+
+                    }
+                );
+
+
+                pagesContainer.appendChild(button);
+
+            }
+
+            function createDots() {
+
+                const dots =
+                    document.createElement("span");
+
+
+                dots.className =
+                    "pagination-dots";
+
+
+                dots.textContent =
+                    "…";
+
+
+                pagesContainer.appendChild(dots);
+
+            }
+
+            previousButton.addEventListener(
+                "click",
+                function () {
+
+                    if (currentPage > 1) {
+
+                        showPage(
+                            currentPage - 1
+                        );
+
+                    }
+
+                }
+            );
+
+            nextButton.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        currentPage < totalPages
+                    ) {
+
+                        showPage(
+                            currentPage + 1
+                        );
+
+                    }
+
+                }
+            );
+
+            showPage(1);
+
+        });
+
+    </script>
+
+}

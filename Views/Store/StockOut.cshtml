@@ -1,0 +1,620 @@
+﻿@model List<Store_Management.Models.Item>
+
+@{
+    ViewData["Title"] = "Stock Out";
+}
+
+<div class="stockout-page">
+
+    <div class="stockout-header">
+        <div>
+            <h2>Stock Out</h2>
+            <p>Remove items from the selected brand</p>
+            <span class="brand-name">Brand: @ViewBag.BrandName</span>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="table-container">
+        <table class="stockout-table">
+            <colgroup>
+                <col class="col-product" />
+                <col class="col-part" />
+                <col class="col-model" />
+                <col class="col-project" />
+                <col class="col-name" />
+                <col class="col-stock" />
+                <col class="col-quantity" />
+                <col class="col-remarks" />
+                <col class="col-action" />
+            </colgroup>
+
+            <thead>
+                <tr>
+                    <th>PRODUCT</th>
+                    <th>PART NUMBER</th>
+                    <th>MODEL NUMBER</th>
+                    <th>PROJECT CODE</th>
+                    <th>ITEM NAME</th>
+                    <th>AVAILABLE STOCK</th>
+                    <th>QUANTITY TO REMOVE</th>
+                    <th>REMARKS</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model != null && Model.Count > 0)
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="product-icon">
+                                    @if (!string.IsNullOrWhiteSpace(item.ImagePath))
+                                    {
+                                        <img src="@item.ImagePath"
+                                             alt="Product"
+                                             onerror="this.style.display='none';" />
+                                    }
+                                    else
+                                    {
+                                        <span>📦</span>
+                                    }
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="part-number">@item.PartNumber</span>
+                    </td>
+
+                    <td>
+                        @(string.IsNullOrWhiteSpace(item.ModelNumber)
+                                                ? "—"
+                                                : item.ModelNumber)
+                                                               </td>
+
+                    <td>
+                        @(string.IsNullOrWhiteSpace(item.ProjectCode)
+                                                ? "—"
+                                                : item.ProjectCode)
+                    </td>
+
+                            <td>
+                                <div class="item-name">@item.ItemName</div>
+                            </td>
+
+                            <td>
+                                <span class="available-stock">
+                                    <span class="stock-dot"></span>
+                                    <span>@item.Quantity</span>
+                                    <small>Available</small>
+                                </span>
+                            </td>
+
+                            <td>
+                                <input type="number"
+                                       id="qty-@item.Id"
+                                       min="1"
+                                       max="@(item.Quantity > 0 ? item.Quantity : 0)"
+                                       step="1"
+                                       class="qty-input"
+                                       placeholder="Qty"
+                                       aria-label="Quantity to remove"
+                                       required
+                                       form="stockout-form-@item.Id"
+                                       disabled="@(item.Quantity <= 0)" />
+                            </td>
+
+                            <td>
+                                <input type="text"
+                                       id="remarks-@item.Id"
+                                       class="remarks-input"
+                                       maxlength="500"
+                                       placeholder="Enter remarks"
+                                       aria-label="Stock out remarks"
+                                       form="stockout-form-@item.Id"
+                                       disabled="@(item.Quantity <= 0)" />
+                            </td>
+
+                            <td>
+                                <form id="stockout-form-@item.Id"
+                                      asp-controller="Store"
+                                      asp-action="StockOutItem"
+                                      method="post"
+                                      onsubmit="return prepareStockOut(this, @item.Id, @item.Quantity);">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="brandId" value="@ViewBag.BrandId" />
+
+                                    <input type="hidden"
+                                           name="quantity"
+                                           id="submit-qty-@item.Id" />
+
+                                    <input type="hidden"
+                                           name="remarks"
+                                           id="submit-remarks-@item.Id" />
+
+                                    <button type="submit"
+                                            class="submit-button"
+                                            disabled="@(item.Quantity <= 0)">
+                                        Submit
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                                }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" class="empty-row">
+                            No items found for this brand.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    /* =========================
+           STOCK OUT PAGE
+           ========================= */
+
+    .stockout-page {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        margin: 20px 0;
+        padding: 0 10px;
+        color: #0f172a;
+        box-sizing: border-box;
+    }
+
+        .stockout-page *,
+        .stockout-page *::before,
+        .stockout-page *::after {
+            box-sizing: border-box;
+        }
+
+    /* Header */
+
+    .stockout-header {
+        margin-bottom: 20px;
+    }
+
+        .stockout-header h2 {
+            margin: 0 0 6px;
+            color: #0f172a;
+            font-size: 27px;
+            font-weight: 700;
+        }
+
+        .stockout-header p {
+            margin: 0 0 10px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+    .brand-name {
+        display: inline-block;
+        max-width: 100%;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #eaf2ff;
+        color: #1d4ed8;
+        font-size: 13px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    /* Notifications */
+
+    .stockout-page .alert {
+        width: 100%;
+        margin-bottom: 15px;
+        padding: 12px 15px;
+        border-radius: 8px;
+        overflow-wrap: anywhere;
+    }
+
+    /* Table container */
+
+    .stockout-page .table-container {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Table layout */
+
+    .stockout-page .stockout-table {
+        width: 100%;
+        min-width: 0;
+        border-collapse: collapse;
+        border-spacing: 0;
+        table-layout: fixed;
+        margin: 0;
+    }
+
+    /* Column proportions */
+
+    .stockout-page .col-product {
+        width: 7%;
+    }
+
+    .stockout-page .col-part {
+        width: 12%;
+    }
+
+    .stockout-page .col-model {
+        width: 10%;
+    }
+
+    .stockout-page .col-project {
+        width: 10%;
+    }
+
+    .stockout-page .col-name {
+        width: 14%;
+    }
+
+    .stockout-page .col-stock {
+        width: 12%;
+    }
+
+    .stockout-page .col-quantity {
+        width: 9%;
+    }
+
+    .stockout-page .col-remarks {
+        width: 17%;
+    }
+
+    .stockout-page .col-action {
+        width: 9%;
+    }
+
+    /* Table heading */
+
+    .stockout-page .stockout-table thead {
+        background: #1967c2;
+        color: #ffffff;
+    }
+
+    .stockout-page .stockout-table th {
+        padding: 13px 6px;
+        text-align: left;
+        vertical-align: middle;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.45;
+        letter-spacing: 0.2px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* Table cells */
+
+    .stockout-page .stockout-table td {
+        padding: 12px 6px;
+        border-bottom: 1px solid #e8edf3;
+        color: #334155;
+        font-size: 12px;
+        vertical-align: middle;
+        overflow-wrap: anywhere;
+    }
+
+    .stockout-page .stockout-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .stockout-page .stockout-table tbody tr:hover {
+        background: #f8fbff;
+    }
+
+    /* Product image */
+
+    .stockout-page .product-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 48px;
+        height: 48px;
+        margin: 0 auto;
+        border-radius: 10px;
+        background: #f1f5f9;
+        font-size: 23px;
+        overflow: hidden;
+    }
+
+        .stockout-page .product-icon img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+    /* Part number */
+
+    .stockout-page .part-number {
+        display: inline-block;
+        max-width: 100%;
+        padding: 5px 6px;
+        border-radius: 7px;
+        background: #f1f5f9;
+        color: #334155;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* Item name */
+
+    .stockout-page .item-name {
+        min-width: 0;
+        font-size: 12px;
+        font-weight: 700;
+        color: #0f172a;
+        overflow-wrap: anywhere;
+    }
+
+    .stockout-page .item-subtitle {
+        display: block;
+        margin-top: 4px;
+        color: #94a3b8;
+        font-size: 10px;
+    }
+
+    /* Available stock */
+
+    .stockout-page .available-stock {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 4px;
+        max-width: 100%;
+        padding: 7px;
+        border-radius: 8px;
+        background: #e9fbf2;
+        color: #047857;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .stockout-page .stock-dot {
+        flex: 0 0 7px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #059669;
+    }
+
+    .stockout-page .available-stock small {
+        font-size: 9px;
+        font-weight: 400;
+    }
+
+    /* Quantity column: compact width */
+
+    .stockout-page .stockout-table th:nth-child(7),
+    .stockout-page .stockout-table td:nth-child(7) {
+        padding-right: 4px;
+        padding-left: 4px;
+    }
+
+    .stockout-page .qty-input {
+        display: block;
+        width: 100%;
+        max-width: 68px;
+        min-width: 0;
+        height: 35px;
+        margin: 0 auto;
+        padding: 0 4px;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        outline: none;
+        background: #ffffff;
+        color: #0f172a;
+        font-family: inherit;
+        font-size: 12px;
+        text-align: center;
+    }
+
+    /* Remarks */
+
+    .stockout-page .remarks-input {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        height: 35px;
+        margin: 0;
+        padding: 0 7px;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        outline: none;
+        background: #ffffff;
+        color: #0f172a;
+        font-family: inherit;
+        font-size: 11px;
+    }
+
+        .stockout-page .qty-input:focus,
+        .stockout-page .remarks-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.10);
+        }
+
+        .stockout-page .qty-input:disabled,
+        .stockout-page .remarks-input:disabled {
+            background: #f1f5f9;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+    /* Submit button */
+
+    .stockout-page .stockout-table form {
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+    }
+
+    .stockout-page .submit-button {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        min-height: 34px;
+        padding: 6px 4px;
+        border: none;
+        border-radius: 7px;
+        background: #1967c2;
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 10px;
+        font-weight: 700;
+        text-align: center;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+        .stockout-page .submit-button:hover:not(:disabled) {
+            background: #1554a0;
+        }
+
+        .stockout-page .submit-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    /* Empty state */
+
+    .stockout-page .empty-row {
+        padding: 30px 10px !important;
+        color: #64748b !important;
+        text-align: center;
+    }
+
+    /* Medium screens */
+
+    @@media (max-width: 1200px) {
+        .stockout-page {
+            padding: 0 6px;
+        }
+
+            .stockout-page .stockout-table th {
+                padding: 10px 4px;
+                font-size: 9px;
+            }
+
+            .stockout-page .stockout-table td {
+                padding: 9px 4px;
+                font-size: 10px;
+            }
+
+            .stockout-page .col-quantity {
+                width: 9%;
+            }
+
+            .stockout-page .qty-input {
+                max-width: 58px;
+                height: 33px;
+                font-size: 11px;
+            }
+
+            .stockout-page .remarks-input {
+                height: 33px;
+                padding: 0 4px;
+                font-size: 10px;
+            }
+
+            .stockout-page .product-icon {
+                max-width: 38px;
+                height: 38px;
+            }
+
+            .stockout-page .available-stock {
+                padding: 5px;
+            }
+    }
+
+    /* Small screens */
+
+    @@media (max-width: 768px) {
+        .stockout-header h2 {
+            font-size: 23px;
+        }
+
+        .stockout-page .table-container {
+            overflow-x: auto;
+        }
+
+        .stockout-page .stockout-table {
+            min-width: 760px;
+        }
+
+            .stockout-page .stockout-table th {
+                padding: 9px 5px;
+                font-size: 10px;
+            }
+
+            .stockout-page .stockout-table td {
+                padding: 8px 5px;
+                font-size: 10px;
+            }
+    }
+</style>
+
+<script>
+    function prepareStockOut(form, itemId, availableStock) {
+        const qtyInput = document.getElementById("qty-" + itemId);
+        const remarksInput = document.getElementById("remarks-" + itemId);
+
+        const quantity = Number(qtyInput.value);
+
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+            alert("Please enter a valid whole-number quantity.");
+            qtyInput.focus();
+            return false;
+        }
+
+        if (quantity > availableStock) {
+            alert("Insufficient stock. Available quantity: " + availableStock);
+            qtyInput.focus();
+            return false;
+        }
+
+        document.getElementById("submit-qty-" + itemId).value = quantity;
+        document.getElementById("submit-remarks-" + itemId).value =
+            remarksInput.value.trim();
+
+        return confirm(
+            "Remove " + quantity + " Quantities from stock?"
+        );
+    }
+</script>
