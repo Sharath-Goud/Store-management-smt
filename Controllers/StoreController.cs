@@ -19,10 +19,6 @@ namespace Store_Management.Controllers
         }
 
 
-        // ============================================================
-        // ADD PAGE
-        // ============================================================
-
         [HttpGet]
         public IActionResult Add()
         {
@@ -35,10 +31,6 @@ namespace Store_Management.Controllers
             return View();
         }
 
-
-        // ============================================================
-        // STORE INDEX - BRAND SPECIFIC ITEMS
-        // ============================================================
 
         [HttpGet]
         public async Task<IActionResult> Index(
@@ -53,10 +45,6 @@ namespace Store_Management.Controllers
                     "Account");
             }
 
-            // ============================================================
-            // GET BRAND FROM URL OR SESSION
-            // ============================================================
-
             if (!brandId.HasValue)
             {
                 brandId =
@@ -64,33 +52,19 @@ namespace Store_Management.Controllers
                         "SelectedBrandId");
             }
 
-            // ============================================================
-            // NO BRAND SELECTED
-            // ============================================================
-
             if (!brandId.HasValue)
             {
                 TempData["Error"] =
                     "Please select a brand first.";
 
-                // Change BrandSelection to your actual
-                // brand-selection controller name
                 return RedirectToAction(
                     "Index",
                     "BrandSelection");
             }
 
-            // ============================================================
-            // SAVE SELECTED BRAND IN SESSION
-            // ============================================================
-
             HttpContext.Session.SetInt32(
                 "SelectedBrandId",
                 brandId.Value);
-
-            // ============================================================
-            // GET BRAND
-            // ============================================================
 
             var brand =
                 await _dataService.GetBrandById(
@@ -109,10 +83,6 @@ namespace Store_Management.Controllers
                     "BrandSelection");
             }
 
-            // ============================================================
-            // GET ONLY SELECTED BRAND ITEMS
-            // ============================================================
-
             var allItems =
                 await _dataService.GetItemsByBrand(
                     brandId.Value);
@@ -120,10 +90,6 @@ namespace Store_Management.Controllers
             allItems =
                 allItems?.ToList()
                 ?? new List<Item>();
-
-            // ============================================================
-            // SEARCH
-            // ============================================================
 
             search = search?.Trim();
 
@@ -164,10 +130,6 @@ namespace Store_Management.Controllers
                         .ToList();
             }
 
-            // ============================================================
-            // TRANSACTIONS
-            // ============================================================
-
             var allTransactions =
                 new List<Transaction>();
 
@@ -179,10 +141,6 @@ namespace Store_Management.Controllers
                         item.Transactions);
                 }
             }
-
-            // ============================================================
-            // VIEW MODEL
-            // ============================================================
 
             var viewModel =
                 new StoreViewModel
@@ -317,6 +275,37 @@ namespace Store_Management.Controllers
 
                     return RedirectToAction("Index", "Store");
                 }
+
+
+                // Check whether this Part Number already exists
+                // under the selected brand.
+                var existingItems =
+                    await _dataService.GetItemsByBrand(brandId);
+
+                var existingItem = existingItems?.FirstOrDefault(i =>
+                    !string.IsNullOrWhiteSpace(i.PartNumber) &&
+                    string.Equals(
+                        i.PartNumber.Trim(),
+                        partNumber.Trim(),
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (existingItem != null)
+                {
+                    // Update the existing row instead of inserting
+                    // a new item.
+                    await _dataService.UpdateItemQuantity(
+                        existingItem.Id,
+                        quantity,
+                        "In");
+
+                    TempData["Success"] =
+                        $"Stock In successful. Added {quantity} units.";
+
+                    return RedirectToAction(
+                        "AddItem",
+                        new { brandId, operation = "In" });
+                }
+
 
                 // LifeTimeDays = LifeTime * 3000 / 2400
                 decimal lifeTimeDays =
@@ -902,6 +891,57 @@ namespace Store_Management.Controllers
 
             return RedirectToAction("StockOut", new { brandId });
         }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> LookupPartNumber(
+            int brandId,
+            string partNumber)
+        {
+            if (HttpContext.Session.GetString("LoggedIn") != "true")
+                return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(partNumber))
+                return BadRequest(new { message = "Enter a Part Number." });
+
+            var items = await _dataService.GetItemsByBrand(brandId);
+
+            var matchingItems = items?
+                .Where(i =>
+                    !string.IsNullOrWhiteSpace(i.PartNumber) &&
+                    string.Equals(
+                        i.PartNumber.Trim(),
+                        partNumber.Trim(),
+                        StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (matchingItems == null || matchingItems.Count == 0)
+            {
+                return NotFound(new
+                {
+                    message = "New Part Number. Please enter the item details."
+                });
+            }
+
+            var item = matchingItems[0];
+            var totalQuantity = item.Quantity;
+
+            return Json(new
+            {
+                found = true,
+                partNumber = item.PartNumber,
+                itemName = item.ItemName,
+                modelNumber = item.ModelNumber,
+                projectCode = item.ProjectCode,
+                lifeTime = item.LifeTime,
+                leadTime = item.LeadTime,
+                status = item.Status,
+                imagePath = item.ImagePath,
+                quantity = totalQuantity
+            });
+        }
+
 
     }
 }

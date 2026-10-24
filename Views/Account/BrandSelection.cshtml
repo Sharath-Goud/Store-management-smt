@@ -443,51 +443,35 @@
 
                 @foreach (var brand in Model)
                 {
-
-                    <div class="brand-option">
-
-
-                        <a asp-controller="Store"
-                           asp-action="Index"
-                           asp-route-brandId="@brand.BrandId"
-                           class="brand-link">
-
-                            <h2>
-                                @brand.BrandName
-                            </h2>
-
-                        </a>
+                    <div class="brand-option"
+                         onclick="window.location.href='@Url.Action("Index", "Store", new { brandId = brand.BrandId })'">
 
                         <div class="brand-actions">
 
-
                             <button type="button"
+                                    title="Edit Brand"
                                     onclick="event.stopPropagation(); openEditPopup(
-                                '@brand.BrandId',
-                                '@brand.BrandName')">
+                            '@brand.BrandId',
+                            '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(brand.BrandName))')">
 
-                                <span class="card-edit-icon">
-                                    ✏
-                                </span>
+                                <span class="card-edit-icon">✏</span>
 
                             </button>
 
                             <button type="button"
+                                    title="Delete Brand"
                                     onclick="event.stopPropagation(); deleteBrand('@brand.BrandId')">
 
                                 🗑
 
                             </button>
 
-
                         </div>
 
-
+                        <h2>@brand.BrandName</h2>
 
                     </div>
-
                 }
-
 
             </div>
 

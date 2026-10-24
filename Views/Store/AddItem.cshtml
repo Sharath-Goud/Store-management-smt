@@ -97,6 +97,11 @@
 
                     </div>
 
+                    <div id="partNumberMessage"
+                         role="status"
+                         style="margin-top:8px;font-size:13px;">
+                    </div>
+
                     <div class="input-box">
 
 
@@ -113,6 +118,7 @@
 
                     </div>
 
+
                     <div class="input-box">
 
                         <label>
@@ -120,13 +126,25 @@
                             <span>*</span>
                         </label>
 
+                        <!-- Existing stock: display only -->
+                        <div class="input-box" id="currentStockBox" style="display:none;">
+                            <label>Current Available Stock</label>
+                            <input id="currentStock"
+                                   type="number"
+                                   readonly />
+                        </div>
+
+                        <!-- New quantity: editable -->
                         <input id="quantity"
                                name="quantity"
                                type="number"
-                               placeholder="Enter quantity"
+                               min="1"
+                               step="1"
+                               placeholder="Enter quantity to add"
                                required />
 
                     </div>
+
 
 
                     <!-- MODEL NUMBER -->
@@ -678,51 +696,6 @@
 
         });
 
-        // document.addEventListener("paste", function (event) {
-
-        //     const clipboardData = event.clipboardData;
-
-        //     if (!clipboardData) {
-        //         return;
-        //     }
-
-
-        //     const items = clipboardData.items;
-
-        //     if (!items) {
-        //         return;
-        //     }
-
-
-        //     for (let i = 0; i < items.length; i++) {
-
-        //         const item = items[i];
-
-        //         if (item.type.indexOf("image") !== -1) {
-
-        //             event.preventDefault();
-
-        //             const file = item.getAsFile();
-
-        //             if (!file) {
-        //                 return;
-        //             }
-
-        //             const dataTransfer = new DataTransfer();
-
-        //             dataTransfer.items.add(file);
-
-        //             photoInput.files = dataTransfer.files;
-
-        //             showImage(file);
-
-
-        //             break;
-        //         }
-
-        //     }
-
-        // });
 
         uploadBox.addEventListener("dragover", function (event) {
 
@@ -781,5 +754,161 @@
         });
 
     });
+
+        const lookupPhotoInput = document.getElementById("photoInput");
+    const lookupUploadContent = document.getElementById("uploadContent");
+    const lookupPreviewContainer = document.getElementById("previewContainer");
+    const lookupPreview = document.getElementById("preview");
+
+    function clearLookupImage() {
+        if (lookupPhotoInput) {
+            lookupPhotoInput.value = "";
+        }
+
+        if (lookupPreview) {
+            lookupPreview.src = "";
+        }
+
+        if (lookupPreviewContainer) {
+            lookupPreviewContainer.classList.remove("show");
+        }
+
+        if (lookupUploadContent) {
+            lookupUploadContent.style.display = "block";
+        }
+    }
+
+    const partNumberInput = document.getElementById("partNumber");
+    const itemNameInput = document.getElementById("itemName");
+    const quantityInput = document.getElementById("quantity");
+    const currentStockInput = document.getElementById("currentStock");
+    const currentStockBox = document.getElementById("currentStockBox");
+    const modelNumberInput = document.getElementById("modelNumber");
+    const projectCodeInput = document.getElementById("projectCode");
+    const lifeTimeInput = document.getElementById("lifeTime");
+    const leadTimeInput = document.getElementById("leadTime");
+    const statusInput = document.getElementById("status");
+    const message = document.getElementById("partNumberMessage");
+
+    const brandId = document.querySelector('input[name="brandId"]').value;
+    const lookupUrl = '@Url.Action("LookupPartNumber", "Store")';
+
+    let lookupRequest = 0;
+
+
+    function resetItemDetails() {
+        itemNameInput.value = "";
+        modelNumberInput.value = "";
+        projectCodeInput.value = "";
+        lifeTimeInput.value = "";
+        leadTimeInput.value = "";
+        statusInput.value = "";
+
+        quantityInput.value = "";
+        currentStockInput.value = "";
+        currentStockBox.style.display = "none";
+
+        clearLookupImage();
+    }
+
+
+    partNumberInput.addEventListener("keydown", async function (event) {
+        if (event.key !== "Enter") return;
+
+        event.preventDefault();
+
+        const partNumber = partNumberInput.value.trim();
+
+        if (!partNumber) {
+            message.textContent = "Please enter a Part Number.";
+            return;
+        }
+
+        const requestId = ++lookupRequest;
+
+        message.style.color = "#64748b";
+        message.textContent = "Checking Part Number...";
+
+
+    try {
+        const url = new URL(lookupUrl, window.location.origin);
+        url.searchParams.set("brandId", brandId);
+        url.searchParams.set("partNumber", partNumber);
+
+        const response = await fetch(url, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        });
+
+        // Ignore older responses if another search was started.
+        if (requestId !== lookupRequest) return;
+
+        // Part Number does not exist: prepare the form for a new item.
+        if (response.status === 404) {
+            resetItemDetails();
+
+            message.style.color = "#b45309";
+            message.textContent =
+                "New Part Number. Please fill in all the fields.";
+
+            itemNameInput.focus();
+            return;
+        }
+
+        // Handle other unsuccessful responses.
+        if (!response.ok) {
+            throw new Error(
+                "Unable to check the Part Number. Status: " +
+                response.status
+            );
+        }
+
+        const data = await response.json();
+
+        // Prefill existing item details.
+        partNumberInput.value = data.partNumber ?? partNumber;
+        itemNameInput.value = data.itemName ?? "";
+        modelNumberInput.value = data.modelNumber ?? "";
+        projectCodeInput.value = data.projectCode ?? "";
+        lifeTimeInput.value = data.lifeTime ?? "";
+        leadTimeInput.value = data.leadTime ?? "";
+        statusInput.value = data.status ?? "";
+
+        // Display existing available stock separately.
+        currentStockInput.value = data.quantity ?? 0;
+        currentStockBox.style.display = "block";
+
+        // Enter only the additional quantity to receive.
+        quantityInput.value = "";
+
+           // Display the saved image, if available.
+    clearLookupImage();
+
+    if (data.imagePath) {
+        lookupPreview.src = data.imagePath;
+        lookupUploadContent.style.display = "none";
+        lookupPreviewContainer.classList.add("show");
+    }
+
+        message.style.color = "#047857";
+        message.textContent =
+            "Existing Part Number found. Details loaded successfully.";
+
+        // Move the cursor to the additional quantity field.
+        quantityInput.focus();
+
+    } catch (error) {
+        if (requestId !== lookupRequest) return;
+
+        console.error("Part Number lookup failed:", error);
+
+        message.style.color = "#dc2626";
+        message.textContent =
+            "Could not check the Part Number. Please try again.";
+    }
+
+    });
+
 
 </script>

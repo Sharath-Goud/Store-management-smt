@@ -121,29 +121,35 @@
         </div>
 
 
-        <div class="summary-card">
+
+        <!-- NOT SAFE SUMMARY CARD -->
+        <div class="summary-card not-safe-summary"
+             id="notSafeSummaryCard"
+             role="button"
+             tabindex="0"
+             title="Click to view all Not Safe items">
 
             <div class="summary-content">
-
-                <span class="summary-label">
-                    Low Stock
-                </span>
+                <span class="summary-label">Not Safe</span>
 
                 <strong class="summary-value">
-                    @(Model.Items?.Count(x => x.Quantity <= 10) ?? 0)
+                    @(Model.Items?.Count(x =>
+                                        x.LifeTimeDays.HasValue &&
+                                        x.LeadTimeDays.HasValue &&
+                                        x.LifeTimeDays.Value < x.LeadTimeDays.Value) ?? 0)
                 </strong>
 
                 <span class="summary-description">
                     Items requiring attention
                 </span>
-
             </div>
 
-            <div class="summary-icon orange">
+            <div class="summary-icon"
+                 style="background:#fff1f2; color:#be123c;">
                 ⚠
             </div>
-
         </div>
+
 
 
         <div class="summary-card">
@@ -240,12 +246,21 @@
                     {
                         foreach (var item in Model.Items)
                         {
+
                             <tr class="inventory-row"
                                 data-part-number="@item.PartNumber"
-                                data-item-name="@item.ItemName">
+                                data-item-name="@item.ItemName"
+                                data-safety="@(
+                                item.LifeTimeDays.HasValue &&
+                                item.LeadTimeDays.HasValue
+                                    ? (item.LifeTimeDays.Value < item.LeadTimeDays.Value
+                                        ? "not-safe"
+                                        : item.LifeTimeDays.Value > item.LeadTimeDays.Value
+                                            ? "safe"
+                                            : "review")
+                                    : "pending")">
 
 
-                                <!-- Product image -->
                                 <td>
                                     <div class="product-image-wrapper">
                                         @if (!string.IsNullOrWhiteSpace(item.ImagePath))
@@ -326,10 +341,14 @@
                                         }
                                         else if (item.LifeTimeDays.Value < item.LeadTimeDays.Value)
                                         {
-                                            <span class="safety-badge not-safe">
+
+                                            <button type="button"
+                                                    class="safety-badge not-safe safety-filter-button"
+                                                    onclick="filterBySafety('not-safe')">
                                                 <span class="safety-dot"></span>
                                                 Not Safe
-                                            </span>
+                                            </button>
+
                                         }
                                         else
                                         {
@@ -2043,6 +2062,25 @@
     }
 
     }
+
+    .not-safe-summary {
+        cursor: pointer;
+    }
+
+        .not-safe-summary:hover {
+            border-color: #fecdd3;
+            box-shadow: 0 8px 24px rgba(190, 24, 93, 0.10);
+        }
+
+        .not-safe-summary:focus-visible {
+            outline: 2px solid #be123c;
+            outline-offset: 3px;
+        }
+
+    .safety-filter-button {
+        font-family: inherit;
+        cursor: pointer;
+    }
 </style>
 
 
@@ -2115,6 +2153,7 @@
             const noSearchResults =
                 document.getElementById("noSearchResults");
 
+                let safetyFilter = "";
 
             if (!searchInput) {
                 return;
@@ -2145,25 +2184,23 @@
                             row.getAttribute("data-item-name") || ""
                         ).toLowerCase();
 
-
-                    // Match Part Number OR Item Name
-                    const matches =
+                    const matchesSearch =
                         partNumber.includes(searchText) ||
                         itemName.includes(searchText);
 
+                    const matchesSafety =
+                        safetyFilter === "" ||
+                        row.getAttribute("data-safety") === safetyFilter;
+
+                    const matches = matchesSearch && matchesSafety;
 
                     if (matches) {
-
                         row.style.display = "";
-
                         visibleCount++;
-
-                    }
-                    else {
-
+                    } else {
                         row.style.display = "none";
-
                     }
+
 
                 });
 
@@ -2180,18 +2217,11 @@
 
                 if (noSearchResults) {
 
-                    if (
-                        visibleCount === 0 &&
-                        searchText.length > 0
-                    ) {
-
+                   if (visibleCount === 0 &&
+                        (searchText.length > 0 || safetyFilter !== "")) {
                         noSearchResults.style.display = "table-row";
-
-                    }
-                    else {
-
+                    } else {
                         noSearchResults.style.display = "none";
-
                     }
 
                 }
@@ -2207,26 +2237,56 @@
                 }
             );
 
-            if (clearButton) {
 
+            if (clearButton) {
                 clearButton.addEventListener(
                     "click",
                     function () {
-
                         searchInput.value = "";
-
                         filterInventory();
-
                         searchInput.focus();
-
                     }
                 );
+            }
 
+            // Click the Not Safe summary card or badge.
+            window.filterBySafety = function (status) {
+                safetyFilter = status;
+                searchInput.value = "";
+
+                filterInventory();
+
+                const inventoryCard =
+                    document.querySelector(".inventory-card");
+
+                if (inventoryCard) {
+                    inventoryCard.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                }
+            };
+
+            const notSafeCard =
+                document.getElementById("notSafeSummaryCard");
+
+            if (notSafeCard) {
+                notSafeCard.addEventListener("click", function () {
+                    window.filterBySafety("not-safe");
+                });
+
+                notSafeCard.addEventListener("keydown", function (event) {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        window.filterBySafety("not-safe");
+                    }
+                });
             }
 
             filterInventory();
 
         });
+
 
         document.addEventListener("DOMContentLoaded", function () {
 
