@@ -96,16 +96,63 @@ namespace Store_Management.Services
         }
 
 
+        //public async Task<Item> AddItem(Item item)
+        //{
+        //    item.CreatedAt = DateTime.Now;
+        //    item.UpdatedAt = DateTime.Now;
+
+        //    // Validate and calculate the derived values.
+        //    if (item.LifeTime.HasValue)
+        //    {
+        //        item.LifeTimeDays =
+        //            (item.LifeTime.Value * 3000m) / 2400m;
+        //    }
+
+        //    if (item.LeadTime.HasValue)
+        //    {
+        //        item.LeadTimeDays =
+        //            (item.LeadTime.Value * 2400m) / 2400m;
+        //    }
+
+        //    // Add the item, including both calculated fields.
+        //    _context.Items.Add(item);
+
+        //    // Save the item to the database.
+        //    await _context.SaveChangesAsync();
+
+        //    // Record the initial stock transaction.
+        //    if (item.Quantity > 0)
+        //    {
+        //        var transaction = new Transaction
+        //        {
+        //            ItemId = item.Id,
+        //            Quantity = item.Quantity,
+        //            Type = "In",
+        //            Balance = item.Quantity,
+        //            TransactionDate = DateTime.Now
+        //        };
+
+        //        _context.Transactions.Add(transaction);
+
+        //        await _context.SaveChangesAsync();
+        //    }
+
+        //    return item;
+        //}
+
         public async Task<Item> AddItem(Item item)
         {
             item.CreatedAt = DateTime.Now;
             item.UpdatedAt = DateTime.Now;
 
-            // Validate and calculate the derived values.
             if (item.LifeTime.HasValue)
             {
                 item.LifeTimeDays =
-                    (item.LifeTime.Value * 3000m) / 2400m;
+                    ((decimal)item.Quantity * item.LifeTime.Value) / 2400m;
+            }
+            else
+            {
+                item.LifeTimeDays = null;
             }
 
             if (item.LeadTime.HasValue)
@@ -113,14 +160,15 @@ namespace Store_Management.Services
                 item.LeadTimeDays =
                     (item.LeadTime.Value * 2400m) / 2400m;
             }
+            else
+            {
+                item.LeadTimeDays = null;
+            }
 
-            // Add the item, including both calculated fields.
             _context.Items.Add(item);
 
-            // Save the item to the database.
             await _context.SaveChangesAsync();
 
-            // Record the initial stock transaction.
             if (item.Quantity > 0)
             {
                 var transaction = new Transaction
